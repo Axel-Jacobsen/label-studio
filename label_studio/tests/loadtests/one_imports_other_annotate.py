@@ -30,7 +30,8 @@ def signup(client):
         '/user/signup',
         {'email': f'{username}@heartex.com', 'password': 'password'},
         headers={'X-CSRFToken': csrftoken},
-        catch_response=True)
+        catch_response=True,
+    )
     print(f'User {username} signup response: {r.status_code}')
     return username
 
@@ -45,9 +46,9 @@ class Admin(HttpUser):
             '/api/projects',
             json={
                 'title': f'{username}\'s project',
-                'label_config': '<View><Text name="text" value="$text"/><Choices name="label" toName="text"><Choice value="1"/><Choice value="2"/></Choices></View>'
+                'label_config': '<View><Text name="text" value="$text"/><Choices name="label" toName="text"><Choice value="1"/><Choice value="2"/></Choices></View>',
             },
-            catch_response=True
+            catch_response=True,
         ) as r:
             if r.status_code != 201:
                 r.failure(r.status_code)
@@ -59,10 +60,7 @@ class Admin(HttpUser):
 
     @task
     def view_data_manager(self):
-        self.client.get(
-            f'/projects/{self.project_id}/data',
-            name='projects/<pk>/data'
-        )
+        self.client.get(f'/projects/{self.project_id}/data', name='projects/<pk>/data')
 
     # @tag('import')
     # @task
@@ -70,8 +68,9 @@ class Admin(HttpUser):
         self.client.post(
             '/api/projects/%i/import' % self.project_id,
             name='/api/projects/<pk>/import',
-            files={'csv': open('data.csv', 'rb')})
-            # headers={'content-type': 'multipart/form-data'})
+            files={'csv': open('data.csv', 'rb')},
+        )
+        # headers={'content-type': 'multipart/form-data'})
 
 
 class Annotator(HttpUser):
@@ -95,18 +94,27 @@ class Annotator(HttpUser):
         with self.client.get(
             f'/api/projects/{self.project_id}/next',
             name='/api/projects/<pk>/next',
-            catch_response=True
+            catch_response=True,
         ) as r:
             task = r.json()
             self.client.post(
                 f'/api/tasks/{task["id"]}/annotations',
                 name='/api/tasks/<pk>/annotations',
-                json={'result': [{'from_name': 'label', 'to_name': 'text', 'type': 'choices', 'value': {'choices': [random.choice(['1', '2'])]}}]}
+                json={
+                    'result': [
+                        {
+                            'from_name': 'label',
+                            'to_name': 'text',
+                            'type': 'choices',
+                            'value': {'choices': [random.choice(['1', '2'])]},
+                        }
+                    ]
+                },
             )
 
 
 def randomString(stringLength):
-    """Generate a random string of fixed length """
+    """Generate a random string of fixed length"""
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(stringLength))
 

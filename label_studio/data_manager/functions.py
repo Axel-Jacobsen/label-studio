@@ -23,8 +23,7 @@ class DataManagerException(Exception):
 
 
 def get_all_columns(project, *_):
-    """ Make columns info for the frontend data manager
-    """
+    """Make columns info for the frontend data manager"""
     result = {'columns': []}
 
     # frontend uses MST data model, so we need two directional referencing parent <-> child
@@ -45,23 +44,30 @@ def get_all_columns(project, *_):
     # all data types from import data
     all_data_columns = project.summary.all_data_columns
     if all_data_columns:
-        data_types.update({key: 'Unknown' for key in all_data_columns if key not in data_types})
+        data_types.update(
+            {key: 'Unknown' for key in all_data_columns if key not in data_types}
+        )
 
     # remove $undefined$ if there is one type at least in labeling config, because it will be resolved automatically
     if len(project_data_types) > 0:
         data_types.pop(settings.DATA_UNDEFINED_NAME, None)
 
-    for key, data_type in list(data_types.items()):  # make data types from labeling config first
+    for key, data_type in list(
+        data_types.items()
+    ):  # make data types from labeling config first
         column = {
             'id': key,
             'title': key if key != settings.DATA_UNDEFINED_NAME else 'data',
-            'type': data_type if data_type in ['Image', 'Audio', 'AudioPlus', 'Video', 'Unknown'] else 'String',
+            'type': data_type
+            if data_type in ['Image', 'Audio', 'AudioPlus', 'Video', 'Unknown']
+            else 'String',
             'target': 'tasks',
             'parent': 'data',
             'visibility_defaults': {
                 'explore': True,
-                'labeling': key in project_data_types or key == settings.DATA_UNDEFINED_NAME
-            }
+                'labeling': key in project_data_types
+                or key == settings.DATA_UNDEFINED_NAME,
+            },
         }
         result['columns'].append(column)
         task_data_children.append(column['id'])
@@ -73,7 +79,7 @@ def get_all_columns(project, *_):
         'title': "data",
         'type': "List",
         'target': 'tasks',
-        'children': task_data_children
+        'children': task_data_children,
     }
 
     result['columns'] += [
@@ -84,25 +90,23 @@ def get_all_columns(project, *_):
             'type': 'Number',
             'help': 'Task ID',
             'target': 'tasks',
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': True, 'labeling': False},
         }
     ]
 
-    if flag_set('ff_back_2070_inner_id_12052022_short', user=project.organization.created_by):
-        result['columns'] += [{
-            'id': 'inner_id',
-            'title': "Inner ID",
-            'type': 'Number',
-            'help': 'Internal task ID starting from 1 for the current project',
-            'target': 'tasks',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
+    if flag_set(
+        'ff_back_2070_inner_id_12052022_short', user=project.organization.created_by
+    ):
+        result['columns'] += [
+            {
+                'id': 'inner_id',
+                'title': "Inner ID",
+                'type': 'Number',
+                'help': 'Internal task ID starting from 1 for the current project',
+                'target': 'tasks',
+                'visibility_defaults': {'explore': False, 'labeling': False},
             }
-        }]
+        ]
 
     result['columns'] += [
         {
@@ -111,10 +115,7 @@ def get_all_columns(project, *_):
             'type': 'Datetime',
             'target': 'tasks',
             'help': 'Last annotation date',
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': True, 'labeling': False},
         },
         {
             'id': 'total_annotations',
@@ -122,10 +123,7 @@ def get_all_columns(project, *_):
             'type': "Number",
             'target': 'tasks',
             'help': 'Total annotations per task',
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': True
-            }
+            'visibility_defaults': {'explore': True, 'labeling': True},
         },
         {
             'id': 'cancelled_annotations',
@@ -133,10 +131,7 @@ def get_all_columns(project, *_):
             'type': "Number",
             'target': 'tasks',
             'help': 'Total cancelled (skipped) annotations',
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': True, 'labeling': False},
         },
         {
             'id': 'total_predictions',
@@ -144,10 +139,7 @@ def get_all_columns(project, *_):
             'type': "Number",
             'target': 'tasks',
             'help': 'Total predictions per task',
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': True, 'labeling': False},
         },
         {
             'id': 'annotators',
@@ -155,11 +147,10 @@ def get_all_columns(project, *_):
             'type': 'List',
             'target': 'tasks',
             'help': 'All users who completed the task',
-            'schema': {'items': project.organization.members.values_list('user__id', flat=True)},
-            'visibility_defaults': {
-                'explore': True,
-                'labeling': False
-            }
+            'schema': {
+                'items': project.organization.members.values_list('user__id', flat=True)
+            },
+            'visibility_defaults': {'explore': True, 'labeling': False},
         },
         {
             'id': 'annotations_results',
@@ -167,10 +158,7 @@ def get_all_columns(project, *_):
             'type': "String",
             'target': 'tasks',
             'help': 'Annotation results stacked over all annotations',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'annotations_ids',
@@ -178,10 +166,7 @@ def get_all_columns(project, *_):
             'type': "String",
             'target': 'tasks',
             'help': 'Annotation IDs stacked over all annotations',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'predictions_score',
@@ -189,10 +174,7 @@ def get_all_columns(project, *_):
             'type': "Number",
             'target': 'tasks',
             'help': 'Average prediction score over all task predictions',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'predictions_model_versions',
@@ -201,10 +183,7 @@ def get_all_columns(project, *_):
             'target': 'tasks',
             'help': 'Model versions aggregated over all predictions',
             'schema': {'items': project.get_model_versions()},
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'predictions_results',
@@ -212,10 +191,7 @@ def get_all_columns(project, *_):
             'type': "String",
             'target': 'tasks',
             'help': 'Prediction results stacked over all predictions',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'file_upload',
@@ -223,10 +199,7 @@ def get_all_columns(project, *_):
             'type': "String",
             'target': 'tasks',
             'help': 'Filename of uploaded file',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'storage_filename',
@@ -234,10 +207,7 @@ def get_all_columns(project, *_):
             'type': "String",
             'target': 'tasks',
             'help': 'Filename from import storage',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'created_at',
@@ -245,10 +215,7 @@ def get_all_columns(project, *_):
             'type': 'Datetime',
             'target': 'tasks',
             'help': 'Task creation time',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'updated_at',
@@ -256,10 +223,7 @@ def get_all_columns(project, *_):
             'type': 'Datetime',
             'target': 'tasks',
             'help': 'Task update time',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'updated_by',
@@ -267,11 +231,10 @@ def get_all_columns(project, *_):
             'type': 'List',
             'target': 'tasks',
             'help': 'User who did the last task update',
-            'schema': {'items': project.organization.members.values_list('user__id', flat=True)},
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
+            'schema': {
+                'items': project.organization.members.values_list('user__id', flat=True)
+            },
+            'visibility_defaults': {'explore': False, 'labeling': False},
         },
         {
             'id': 'avg_lead_time',
@@ -279,11 +242,8 @@ def get_all_columns(project, *_):
             'type': 'Number',
             'help': 'Average lead time over all annotations (seconds)',
             'target': 'tasks',
-            'visibility_defaults': {
-                'explore': False,
-                'labeling': False
-            }
-        }
+            'visibility_defaults': {'explore': False, 'labeling': False},
+        },
     ]
 
     result['columns'].append(data_root)
@@ -292,12 +252,14 @@ def get_all_columns(project, *_):
 
 
 def get_prepare_params(request, project):
-    """ This function extract prepare_params from
-        * view_id if it's inside of request data
-        * selectedItems, filters, ordering if they are in request and there is no view id
+    """This function extract prepare_params from
+    * view_id if it's inside of request data
+    * selectedItems, filters, ordering if they are in request and there is no view id
     """
     # use filters and selected items from view
-    view_id = int_from_request(request.GET, 'view', 0) or int_from_request(request.data, 'view', 0)
+    view_id = int_from_request(request.GET, 'view', 0) or int_from_request(
+        request.data, 'view', 0
+    )
     if view_id > 0:
         view = get_object_or_404(View, pk=view_id)
         if view.project.pk != project.pk:
@@ -316,12 +278,20 @@ def get_prepare_params(request, project):
 
         selected = data.get('selectedItems', {"all": True, "excluded": []})
         if not isinstance(selected, dict):
-            raise DataManagerException('selectedItems must be dict: {"all": [true|false], '
-                                       '"excluded | included": [...task_ids...]}')
+            raise DataManagerException(
+                'selectedItems must be dict: {"all": [true|false], '
+                '"excluded | included": [...task_ids...]}'
+            )
         filters = data.get('filters', None)
         ordering = data.get('ordering', [])
-        prepare_params = PrepareParams(project=project.id, selectedItems=selected, data=data,
-                                       filters=filters, ordering=ordering, request=request)
+        prepare_params = PrepareParams(
+            project=project.id,
+            selectedItems=selected,
+            data=data,
+            filters=filters,
+            ordering=ordering,
+            request=request,
+        )
     return prepare_params
 
 
@@ -332,8 +302,7 @@ def get_prepared_queryset(request, project):
 
 
 def evaluate_predictions(tasks):
-    """ Call ML backend for prediction evaluation of the task queryset
-    """
+    """Call ML backend for prediction evaluation of the task queryset"""
     if not tasks:
         return
 
@@ -360,7 +329,9 @@ def preprocess_field_name(raw_field_name, only_undefined_field=False):
     field_name = raw_field_name.replace("filter:", "")
     field_name = field_name.replace("tasks:", "")
     ascending = False if field_name[0] == '-' else True  # detect direction
-    field_name = field_name[1:] if field_name[0] == '-' else field_name  # remove direction
+    field_name = (
+        field_name[1:] if field_name[0] == '-' else field_name
+    )  # remove direction
     if field_name.startswith("data."):
         if only_undefined_field:
             field_name = f'data__{settings.DATA_UNDEFINED_NAME}'

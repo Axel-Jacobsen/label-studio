@@ -20,22 +20,25 @@ from io_storages.base_models import (
     ExportStorageLink,
     ImportStorage,
     ImportStorageLink,
-    ProjectStorageMixin
+    ProjectStorageMixin,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class LocalFilesMixin(models.Model):
-    path = models.TextField(
-        _('path'), null=True, blank=True,
-        help_text='Local path')
+    path = models.TextField(_('path'), null=True, blank=True, help_text='Local path')
     regex_filter = models.TextField(
-        _('regex_filter'), null=True, blank=True,
-        help_text='Regex for filtering objects')
+        _('regex_filter'),
+        null=True,
+        blank=True,
+        help_text='Regex for filtering objects',
+    )
     use_blob_urls = models.BooleanField(
-        _('use_blob_urls'), default=False,
-        help_text='Interpret objects as BLOBs and generate URLs')
+        _('use_blob_urls'),
+        default=False,
+        help_text='Interpret objects as BLOBs and generate URLs',
+    )
 
     def validate_connection(self):
         path = Path(self.path)
@@ -43,13 +46,17 @@ class LocalFilesMixin(models.Model):
         if not path.exists():
             raise ValidationError(f'Path {self.path} does not exist')
         if document_root not in path.parents:
-            raise ValidationError(f'Path {self.path} must start with '
-                                  f'LOCAL_FILES_DOCUMENT_ROOT={settings.LOCAL_FILES_DOCUMENT_ROOT} '
-                                  f'and must be a child, e.g.: {Path(settings.LOCAL_FILES_DOCUMENT_ROOT) / "abc"}')
+            raise ValidationError(
+                f'Path {self.path} must start with '
+                f'LOCAL_FILES_DOCUMENT_ROOT={settings.LOCAL_FILES_DOCUMENT_ROOT} '
+                f'and must be a child, e.g.: {Path(settings.LOCAL_FILES_DOCUMENT_ROOT) / "abc"}'
+            )
         if settings.LOCAL_FILES_SERVING_ENABLED is False:
-            raise ValidationError("Serving local files can be dangerous, so it's disabled by default. "
-                                  'You can enable it with LOCAL_FILES_SERVING_ENABLED environment variable, '
-                                  'please check docs: https://labelstud.io/guide/storage.html#Local-storage')
+            raise ValidationError(
+                "Serving local files can be dangerous, so it's disabled by default. "
+                'You can enable it with LOCAL_FILES_SERVING_ENABLED environment variable, '
+                'please check docs: https://labelstud.io/guide/storage.html#Local-storage'
+            )
 
 
 class LocalFilesImportStorageBase(LocalFilesMixin, ImportStorage):
@@ -78,7 +85,9 @@ class LocalFilesImportStorageBase(LocalFilesMixin, ImportStorage):
             # {settings.HOSTNAME}/data/local-files?d=<path/to/local/dir>
             document_root = Path(settings.LOCAL_FILES_DOCUMENT_ROOT)
             relative_path = str(path.relative_to(document_root))
-            return {settings.DATA_UNDEFINED_NAME: f'{settings.HOSTNAME}/data/local-files/?d={quote(str(relative_path))}'}
+            return {
+                settings.DATA_UNDEFINED_NAME: f'{settings.HOSTNAME}/data/local-files/?d={quote(str(relative_path))}'
+            }
 
         try:
             with open(path, encoding='utf8') as f:
@@ -86,10 +95,13 @@ class LocalFilesImportStorageBase(LocalFilesMixin, ImportStorage):
         except (UnicodeDecodeError, json.decoder.JSONDecodeError):
             raise ValueError(
                 f"Can\'t import JSON-formatted tasks from {key}. If you're trying to import binary objects, "
-                f"perhaps you've forgot to enable \"Treat every bucket object as a source file\" option?")
+                f"perhaps you've forgot to enable \"Treat every bucket object as a source file\" option?"
+            )
 
         if not isinstance(value, dict):
-            raise ValueError(f"Error on key {key}: For {self.__class__.__name__} your JSON file must be a dictionary with one task.")  # noqa
+            raise ValueError(
+                f"Error on key {key}: For {self.__class__.__name__} your JSON file must be a dictionary with one task."
+            )  # noqa
         return value
 
     def scan_and_create_links(self):
@@ -105,9 +117,10 @@ class LocalFilesImportStorage(ProjectStorageMixin, LocalFilesImportStorageBase):
 
 
 class LocalFilesExportStorage(LocalFilesMixin, ExportStorage):
-
     def save_annotation(self, annotation):
-        logger.debug(f'Creating new object on {self.__class__.__name__} Storage {self} for annotation {annotation}')
+        logger.debug(
+            f'Creating new object on {self.__class__.__name__} Storage {self} for annotation {annotation}'
+        )
         ser_annotation = self._get_serialized_data(annotation)
 
         # get key that identifies this object in storage
@@ -123,11 +136,15 @@ class LocalFilesExportStorage(LocalFilesMixin, ExportStorage):
 
 
 class LocalFilesImportStorageLink(ImportStorageLink):
-    storage = models.ForeignKey(LocalFilesImportStorage, on_delete=models.CASCADE, related_name='links')
+    storage = models.ForeignKey(
+        LocalFilesImportStorage, on_delete=models.CASCADE, related_name='links'
+    )
 
 
 class LocalFilesExportStorageLink(ExportStorageLink):
-    storage = models.ForeignKey(LocalFilesExportStorage, on_delete=models.CASCADE, related_name='links')
+    storage = models.ForeignKey(
+        LocalFilesExportStorage, on_delete=models.CASCADE, related_name='links'
+    )
 
 
 @receiver(post_save, sender=Annotation)

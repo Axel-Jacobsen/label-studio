@@ -31,13 +31,12 @@ def _load_log_payloads():
     for item in log_payloads:
         out[item['name']] = {
             'exclude_from_logs': item.get('exclude_from_logs', False),
-            'log_payloads': item.get('log_payloads')
+            'log_payloads': item.get('log_payloads'),
         }
     return out
 
 
 class ContextLog(object):
-
     _log_payloads = _load_log_payloads()
 
     def __init__(self):
@@ -69,8 +68,9 @@ class ContextLog(object):
     def _is_docker(self):
         path = '/proc/self/cgroup'
         return (
-            os.path.exists('/.dockerenv') or
-            os.path.isfile(path) and any('docker' in line for line in open(path, encoding='utf-8'))
+            os.path.exists('/.dockerenv')
+            or os.path.isfile(path)
+            and any('docker' in line for line in open(path, encoding='utf-8'))
         )
 
     def _get_timestamp_now(self):
@@ -84,11 +84,15 @@ class ContextLog(object):
 
     def _assert_field_in_test(self, field, payload, view_name):
         if get_bool_env('TEST_ENVIRONMENT', False):
-            assert field in payload, f'The field "{field}" should be presented for "{view_name}"'
+            assert (
+                field in payload
+            ), f'The field "{field}" should be presented for "{view_name}"'
 
     def _assert_type_in_test(self, type, payload, view_name):
         if get_bool_env('TEST_ENVIRONMENT', False):
-            assert isinstance(payload, type), f'The type of payload is not "{type}" for "{view_name}"'
+            assert isinstance(
+                payload, type
+            ), f'The type of payload is not "{type}" for "{view_name}"'
 
     def _get_fields(self, view_name, payload, fields):
         out = {}
@@ -111,12 +115,35 @@ class ContextLog(object):
             return
 
         # ======== CUSTOM ======
-        if view_name == 'data_manager:dm-actions' and payload['values'].get('id') == 'next_task':
+        if (
+            view_name == 'data_manager:dm-actions'
+            and payload['values'].get('id') == 'next_task'
+        ):
             self._assert_type_in_test(dict, payload['response'], view_name)
             new_response = {}
             self._assert_field_in_test('drafts', payload['response'], view_name)
-            new_response['drafts'] = len(payload['response']['drafts']) if isinstance(payload['response']['drafts'], list) else payload['response']['drafts']
-            for key in ["id", "inner_id", "cancelled_annotations", "total_annotations", "total_predictions", "updated_by", "created_at", "updated_at", "overlap", "comment_count", "unresolved_comment_count", "last_comment_updated_at", "project", "comment_authors", "queue"]:
+            new_response['drafts'] = (
+                len(payload['response']['drafts'])
+                if isinstance(payload['response']['drafts'], list)
+                else payload['response']['drafts']
+            )
+            for key in [
+                "id",
+                "inner_id",
+                "cancelled_annotations",
+                "total_annotations",
+                "total_predictions",
+                "updated_by",
+                "created_at",
+                "updated_at",
+                "overlap",
+                "comment_count",
+                "unresolved_comment_count",
+                "last_comment_updated_at",
+                "project",
+                "comment_authors",
+                "queue",
+            ]:
                 self._assert_field_in_test(key, payload['response'], view_name)
                 new_response[key] = payload['response'][key]
             payload['response'] = new_response
@@ -127,9 +154,16 @@ class ContextLog(object):
             payload['response'] = {'count': len(payload['response'])}
             return
 
-        if view_name == 'projects:api-templates:template-list' and payload['method'] == 'GET':
-            self._assert_type_in_test(list, payload['response'].get('templates'), view_name)
-            payload['response']['templates'] = [t['title'] for t in payload['response']['templates']]
+        if (
+            view_name == 'projects:api-templates:template-list'
+            and payload['method'] == 'GET'
+        ):
+            self._assert_type_in_test(
+                list, payload['response'].get('templates'), view_name
+            )
+            payload['response']['templates'] = [
+                t['title'] for t in payload['response']['templates']
+            ]
             return
 
         if view_name == 'data_manager:dm-actions' and payload['method'] == 'GET':
@@ -139,23 +173,41 @@ class ContextLog(object):
 
         if view_name == 'data_manager:dm-columns' and payload['method'] == 'GET':
             self._assert_field_in_test('columns', payload['response'], view_name)
-            payload['response']['columns'] = [item.get('id') for item in payload['response']['columns']]
+            payload['response']['columns'] = [
+                item.get('id') for item in payload['response']['columns']
+            ]
             return
 
-        if view_name == 'data_export:api-projects:project-export-formats' and payload['method'] == 'GET':
+        if (
+            view_name == 'data_export:api-projects:project-export-formats'
+            and payload['method'] == 'GET'
+        ):
             self._assert_type_in_test(list, payload['response'], view_name)
             payload['response'] = [item.get('title') for item in payload['response']]
             return
 
-        if (view_name == 'tasks:api:task-annotations' and payload['method'] in 'POST') or \
-            (view_name == 'tasks:api-annotations:annotation-detail' and payload['method'] == 'PATCH') or \
-            (view_name == 'tasks:api:task-annotations-drafts' and payload['method'] == 'POST') or \
-            (view_name == 'tasks:api-drafts:draft-detail' and payload['method'] == 'PATCH'):
+        if (
+            (view_name == 'tasks:api:task-annotations' and payload['method'] in 'POST')
+            or (
+                view_name == 'tasks:api-annotations:annotation-detail'
+                and payload['method'] == 'PATCH'
+            )
+            or (
+                view_name == 'tasks:api:task-annotations-drafts'
+                and payload['method'] == 'POST'
+            )
+            or (
+                view_name == 'tasks:api-drafts:draft-detail'
+                and payload['method'] == 'PATCH'
+            )
+        ):
             self._assert_field_in_test('lead_time', payload['json'], view_name)
             self._assert_field_in_test('result', payload['json'], view_name)
             self._assert_type_in_test(list, payload['json']['result'], view_name)
             payload['json']['result'] = [
-                self._get_fields(view_name, item, ('from_name', 'to_name', 'type', 'origin'))
+                self._get_fields(
+                    view_name, item, ('from_name', 'to_name', 'type', 'origin')
+                )
                 for item in payload['json']['result']
             ]
 
@@ -172,7 +224,9 @@ class ContextLog(object):
                 continue
             log_fields = log_payloads[payload_key].get(payload['method'])
             if log_fields is not None:
-                payload[payload_key] = self._get_fields(view_name, payload[payload_key], log_fields)
+                payload[payload_key] = self._get_fields(
+                    view_name, payload[payload_key], log_fields
+                )
 
     def _exclude_endpoint(self, request):
         if request.resolver_match and request.resolver_match.view_name:
@@ -203,13 +257,19 @@ class ContextLog(object):
                 logger.debug(f'In DEBUG mode, contextlog is not sent.')
                 logger.debug(json.dumps(payload, indent=2))
             else:
-                thread = threading.Thread(target=self.send_job, args=(request, response, body))
+                thread = threading.Thread(
+                    target=self.send_job, args=(request, response, body)
+                )
                 thread.start()
 
     @staticmethod
     def browser_exists(request):
-        return hasattr(request, 'user_agent') and request.user_agent and \
-               hasattr(request.user_agent, 'browser') and request.user_agent.browser
+        return (
+            hasattr(request, 'user_agent')
+            and request.user_agent
+            and hasattr(request.user_agent, 'browser')
+            and request.user_agent.browser
+        )
 
     def create_payload(self, request, response, body):
         advanced_json = None
@@ -235,8 +295,12 @@ class ContextLog(object):
             'python': str(sys.version_info[0]) + '.' + str(sys.version_info[1]),
             'env': self._get_label_studio_env(),
             'version': self.version,
-            'view_name': request.resolver_match.view_name if request.resolver_match else None,
-            'namespace': request.resolver_match.namespace if request.resolver_match else None,
+            'view_name': request.resolver_match.view_name
+            if request.resolver_match
+            else None,
+            'namespace': request.resolver_match.namespace
+            if request.resolver_match
+            else None,
             'scheme': request.scheme,
             'method': request.method,
             'values': request.GET.dict(),
@@ -244,25 +308,29 @@ class ContextLog(object):
             'advanced_json': advanced_json,
             'language': request.LANGUAGE_CODE,
             'content_type': request.content_type,
-            'content_length': int(request.environ.get('CONTENT_LENGTH')) if request.environ.get('CONTENT_LENGTH') else None,
+            'content_length': int(request.environ.get('CONTENT_LENGTH'))
+            if request.environ.get('CONTENT_LENGTH')
+            else None,
             'status_code': response.status_code,
-            'response': self._get_response_content(response)
+            'response': self._get_response_content(response),
         }
         if self.browser_exists(request):
-            payload.update({
-                'is_mobile': request.user_agent.is_mobile,
-                'is_tablet': request.user_agent.is_tablet,
-                'is_touch_capable': request.user_agent.is_touch_capable,
-                'is_pc': request.user_agent.is_pc,
-                'is_bot': request.user_agent.is_bot,
-                'browser': request.user_agent.browser.family,
-                'browser_version': request.user_agent.browser.version_string,
-                'os': request.user_agent.os.family,
-                'platform_system': platform.system(),
-                'platform_release': platform.release(),
-                'os_version': request.user_agent.os.version_string,
-                'device': request.user_agent.device.family,
-            })
+            payload.update(
+                {
+                    'is_mobile': request.user_agent.is_mobile,
+                    'is_tablet': request.user_agent.is_tablet,
+                    'is_touch_capable': request.user_agent.is_touch_capable,
+                    'is_pc': request.user_agent.is_pc,
+                    'is_bot': request.user_agent.is_bot,
+                    'browser': request.user_agent.browser.family,
+                    'browser_version': request.user_agent.browser.version_string,
+                    'os': request.user_agent.os.family,
+                    'platform_system': platform.system(),
+                    'platform_release': platform.release(),
+                    'os_version': request.user_agent.os.version_string,
+                    'device': request.user_agent.device.family,
+                }
+            )
         self._secure_data(payload, request)
         for key in ('json', 'response', 'values', 'env'):
             payload[key] = payload[key] or None
@@ -275,7 +343,7 @@ class ContextLog(object):
             pass
         else:
             try:
-               url = 'https://tele.labelstud.io'
-               requests.post(url=url, json=payload, timeout=3.0)
+                url = 'https://tele.labelstud.io'
+                requests.post(url=url, json=payload, timeout=3.0)
             except:
                 pass

@@ -2,7 +2,14 @@
 """
 from enum import Enum
 from typing import List, Optional, Union, Any
-from pydantic import BaseModel, StrictInt, StrictFloat, StrictStr, StrictBool, ConstrainedList
+from pydantic import (
+    BaseModel,
+    StrictInt,
+    StrictFloat,
+    StrictStr,
+    StrictBool,
+    ConstrainedList,
+)
 
 
 class FilterIn(BaseModel):

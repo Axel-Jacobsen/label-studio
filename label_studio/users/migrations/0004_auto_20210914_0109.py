@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0003_user_active_organization'),
     ]
@@ -20,14 +19,20 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='user',
-            index=models.Index(fields=['first_name'], name='htx_user_first_n_93c5de_idx'),
+            index=models.Index(
+                fields=['first_name'], name='htx_user_first_n_93c5de_idx'
+            ),
         ),
         migrations.AddIndex(
             model_name='user',
-            index=models.Index(fields=['last_name'], name='htx_user_last_na_2ace53_idx'),
+            index=models.Index(
+                fields=['last_name'], name='htx_user_last_na_2ace53_idx'
+            ),
         ),
         migrations.AddIndex(
             model_name='user',
-            index=models.Index(fields=['date_joined'], name='htx_user_date_jo_3bd95e_idx'),
+            index=models.Index(
+                fields=['date_joined'], name='htx_user_date_jo_3bd95e_idx'
+            ),
         ),
     ]

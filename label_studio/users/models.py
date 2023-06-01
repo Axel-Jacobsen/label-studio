@@ -19,10 +19,12 @@ from projects.models import Project
 
 YEAR_START = 1980
 YEAR_CHOICES = []
-for r in range(YEAR_START, (datetime.datetime.now().year+1)):
+for r in range(YEAR_START, (datetime.datetime.now().year + 1)):
     YEAR_CHOICES.append((r, r))
 
-year = models.IntegerField(_('year'), choices=YEAR_CHOICES, default=datetime.datetime.now().year)
+year = models.IntegerField(
+    _('year'), choices=YEAR_CHOICES, default=datetime.datetime.now().year
+)
 
 
 class UserManager(BaseUserManager):
@@ -62,7 +64,8 @@ class UserManager(BaseUserManager):
 
 class UserLastActivityMixin(models.Model):
     last_activity = models.DateTimeField(
-        _('last activity'), default=timezone.now, editable=False)
+        _('last activity'), default=timezone.now, editable=False
+    )
 
     def update_last_activity(self):
         self.last_activity = timezone.now()
@@ -82,6 +85,7 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
 
     Username and password are required. Other fields are optional.
     """
+
     username = models.CharField(_('username'), max_length=256)
     email = models.EmailField(_('email address'), unique=True, blank=True)
 
@@ -90,12 +94,20 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
     phone = models.CharField(_('phone'), max_length=256, blank=True)
     avatar = models.ImageField(upload_to=hash_upload, blank=True)
 
-    is_staff = models.BooleanField(_('staff status'), default=False,
-                                   help_text=_('Designates whether the user can log into this admin site.'))
+    is_staff = models.BooleanField(
+        _('staff status'),
+        default=False,
+        help_text=_('Designates whether the user can log into this admin site.'),
+    )
 
-    is_active = models.BooleanField(_('active'), default=True,
-                                    help_text=_('Designates whether to treat this user as active. '
-                                                'Unselect this instead of deleting accounts.'))
+    is_active = models.BooleanField(
+        _('active'),
+        default=True,
+        help_text=_(
+            'Designates whether to treat this user as active. '
+            'Unselect this instead of deleting accounts.'
+        ),
+    )
 
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
 
@@ -105,14 +117,14 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
         'organizations.Organization',
         null=True,
         on_delete=models.SET_NULL,
-        related_name='active_users'
+        related_name='active_users',
     )
 
     allow_newsletters = models.BooleanField(
         _('allow newsletters'),
         null=True,
         default=None,
-        help_text=_('Allow sending newsletters to user')
+        help_text=_('Allow sending newsletters to user'),
     )
 
     objects = UserManager()
@@ -169,7 +181,7 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
             name = self.email
 
         return name
-        
+
     def get_full_name(self):
         """
         Return the first_name and the last_name for a given user with a space in between.
@@ -186,7 +198,7 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
         if token.exists():
             token.delete()
         return Token.objects.create(user=self)
-    
+
     def get_initials(self):
         initials = '?'
         if not self.first_name and not self.last_name:

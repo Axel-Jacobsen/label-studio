@@ -9,14 +9,20 @@ logger = logging.getLogger(__name__)
 def update_storage(storage):
     logger.info(f'=> Migration for {storage._meta.label} statuses started')
     storage.objects.update(status='initialized')
-    instances = list(storage.objects.all().only('id', 'meta', 'status', 'last_sync_count'))
+    instances = list(
+        storage.objects.all().only('id', 'meta', 'status', 'last_sync_count')
+    )
 
     for instance in instances:
         prefix = f'Project ID={instance.project.id} {instance}'
 
         # import source storages
         if 'import' in storage._meta.label_lower:
-            count = instance.links.count() - instance.last_sync_count if instance.last_sync_count else 0
+            count = (
+                instance.links.count() - instance.last_sync_count
+                if instance.last_sync_count
+                else 0
+            )
             instance.meta['tasks_existed'] = count if count > 0 else 0
             if instance.meta['tasks_existed'] and instance.meta['tasks_existed'] > 0:
                 instance.status = 'completed'

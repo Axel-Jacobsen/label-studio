@@ -35,8 +35,7 @@ def logout(request):
 
 @enforce_csrf_checks
 def user_signup(request):
-    """ Sign up page
-    """
+    """Sign up page"""
     user = request.user
     next_page = request.GET.get('next')
     token = request.GET.get('token')
@@ -51,7 +50,7 @@ def user_signup(request):
     if request.method == 'POST':
         organization = Organization.objects.first()
         if settings.DISABLE_SIGNUP_WITHOUT_LINK is True:
-            if not(token and organization and token == organization.token):
+            if not (token and organization and token == organization.token):
                 raise PermissionDenied()
         else:
             if token and organization and token != organization.token:
@@ -61,22 +60,27 @@ def user_signup(request):
         organization_form = OrganizationSignupForm(request.POST)
 
         if user_form.is_valid():
-            redirect_response = proceed_registration(request, user_form, organization_form, next_page)
+            redirect_response = proceed_registration(
+                request, user_form, organization_form, next_page
+            )
             if redirect_response:
                 return redirect_response
 
-    return render(request, 'users/user_signup.html', {
-        'user_form': user_form,
-        'organization_form': organization_form,
-        'next': next_page,
-        'token': token,
-    })
+    return render(
+        request,
+        'users/user_signup.html',
+        {
+            'user_form': user_form,
+            'organization_form': organization_form,
+            'next': next_page,
+            'token': token,
+        },
+    )
 
 
 @enforce_csrf_checks
 def user_login(request):
-    """ Login page
-    """
+    """Login page"""
     user = request.user
     next_page = request.GET.get('next')
     next_page = next_page if next_page else reverse('projects:project-index')
@@ -102,10 +106,7 @@ def user_login(request):
             user.save(update_fields=['active_organization'])
             return redirect(next_page)
 
-    return render(request, 'users/user_login.html', {
-        'form': form,
-        'next': next_page
-    })
+    return render(request, 'users/user_login.html', {'form': form, 'next': next_page})
 
 
 @login_required
@@ -123,10 +124,9 @@ def user_account(request):
         if form.is_valid():
             form.save()
             return redirect(reverse('user-account'))
-        
-    return render(request, 'users/user_account.html', {
-        'settings': settings,
-        'user': user,
-        'user_profile_form': form,
-        'token': token
-    })
+
+    return render(
+        request,
+        'users/user_account.html',
+        {'settings': settings, 'user': user, 'user_profile_form': form, 'token': token},
+    )

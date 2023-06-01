@@ -7,16 +7,19 @@ from core.utils.params import bool_from_request
 from rest_framework.exceptions import ValidationError
 
 
-@pytest.mark.parametrize('param, result', [
-    ('True', True),
-    ('Yes', True),
-    ('1', True),
-    ('False', False),
-    ('no', False),
-    ('0', False),
-    ('test', None),
-    (None, False)
-])
+@pytest.mark.parametrize(
+    'param, result',
+    [
+        ('True', True),
+        ('Yes', True),
+        ('1', True),
+        ('False', False),
+        ('no', False),
+        ('0', False),
+        ('test', None),
+        (None, False),
+    ],
+)
 @pytest.mark.django_db
 def test_core_bool_from_request(param, result):
     params = {'test': param} if param is not None else {}
@@ -36,14 +39,10 @@ def test_core_bool_from_request(param, result):
         assert bool_from_request(params, 'test', 0) == result
 
 
-@pytest.mark.parametrize('param, result', [
-    ('', None),
-    ('0', 0),
-    ('1', 1),
-    ('10', 10),
-    ('test', None),
-    (None, None)
-])
+@pytest.mark.parametrize(
+    'param, result',
+    [('', None), ('0', 0), ('1', 1), ('10', 10), ('test', None), (None, None)],
+)
 @pytest.mark.django_db
 def test_core_int_from_request(param, result):
     params = {'test': param}
@@ -88,17 +87,27 @@ def test_user_info(business_client):
     assert user is not None
 
 
-@pytest.mark.parametrize('command_line, result', [
-    (['label-studio', 'user', '--username', 'test@test.com', '--password', '12345678'], None),
-])
+@pytest.mark.parametrize(
+    'command_line, result',
+    [
+        (
+            [
+                'label-studio',
+                'user',
+                '--username',
+                'test@test.com',
+                '--password',
+                '12345678',
+            ],
+            None,
+        ),
+    ],
+)
 @pytest.mark.django_db
 def test_main(mocker, command_line, result):
     from server import main
 
-    mocker.patch(
-        "sys.argv",
-        command_line
-    )
+    mocker.patch("sys.argv", command_line)
     output = main()
 
     assert output == result
@@ -115,7 +124,9 @@ def test_string_is_url():
 def test_get_client_ip():
     from label_studio.core.utils.common import get_client_ip
 
-    ip = get_client_ip(types.SimpleNamespace(META={'HTTP_X_FORWARDED_FOR': '127.0.0.1'}))
+    ip = get_client_ip(
+        types.SimpleNamespace(META={'HTTP_X_FORWARDED_FOR': '127.0.0.1'})
+    )
     assert ip == '127.0.0.1'
 
     ip = get_client_ip(types.SimpleNamespace(META={'REMOTE_ADDR': '127.0.0.2'}))

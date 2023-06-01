@@ -11,10 +11,14 @@ def remove(apps, schema_editor):
         if 'hiddenColumns' in view.data:
             if 'explore' in view.data['hiddenColumns']:
                 view.data['hiddenColumns']['explore'].append('tasks:storage_filename')
-                view.data['hiddenColumns']['explore'] = list(set(view.data['hiddenColumns']['explore']))
+                view.data['hiddenColumns']['explore'] = list(
+                    set(view.data['hiddenColumns']['explore'])
+                )
             if 'labeling' in view.data['hiddenColumns']:
                 view.data['hiddenColumns']['labeling'].append('tasks:storage_filename')
-                view.data['hiddenColumns']['labeling'] = list(set(view.data['hiddenColumns']['labeling']))
+                view.data['hiddenColumns']['labeling'] = list(
+                    set(view.data['hiddenColumns']['labeling'])
+                )
 
         view.save()
 
@@ -27,10 +31,14 @@ def backwards(apps, schema_editor):
         if 'hiddenColumns' in view.data:
             if 'explore' in view.data['hiddenColumns']:
                 view.data['hiddenColumns']['explore'].remove('tasks:storage_filename')
-                view.data['hiddenColumns']['explore'] = list(set(view.data['hiddenColumns']['explore']))
+                view.data['hiddenColumns']['explore'] = list(
+                    set(view.data['hiddenColumns']['explore'])
+                )
             if 'labeling' in view.data['hiddenColumns']:
                 view.data['hiddenColumns']['labeling'].remove('tasks:storage_filename')
-                view.data['hiddenColumns']['labeling'] = list(set(view.data['hiddenColumns']['labeling']))
+                view.data['hiddenColumns']['labeling'] = list(
+                    set(view.data['hiddenColumns']['labeling'])
+                )
 
         view.save()
 

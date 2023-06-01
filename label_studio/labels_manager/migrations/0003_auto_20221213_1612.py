@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('labels_manager', '0002_auto_20220131_1325'),
     ]
@@ -13,7 +12,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='label',
             name='updated_at',
-            field=models.DateTimeField(auto_now=True, help_text='Time of label modification', verbose_name='Updated at'),
+            field=models.DateTimeField(
+                auto_now=True,
+                help_text='Time of label modification',
+                verbose_name='Updated at',
+            ),
         ),
         migrations.AlterField(
             model_name='label',
@@ -23,6 +26,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='labellink',
             name='from_name',
-            field=models.CharField(help_text='Tag name', max_length=2048, verbose_name='Tag name'),
+            field=models.CharField(
+                help_text='Tag name', max_length=2048, verbose_name='Tag name'
+            ),
         ),
     ]

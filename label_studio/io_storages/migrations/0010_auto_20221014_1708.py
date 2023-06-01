@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('io_storages', '0009_auto_20220310_0922'),
     ]
@@ -13,51 +12,111 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='azureblobexportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='azureblobimportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='gcsexportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='gcsimportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='localfilesexportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='localfilesimportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='redisexportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='redisimportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='s3exportstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
         migrations.AddField(
             model_name='s3importstorage',
             name='last_sync_job',
-            field=models.CharField(blank=True, help_text='Last sync job ID', max_length=256, null=True, verbose_name='last_sync_job'),
+            field=models.CharField(
+                blank=True,
+                help_text='Last sync job ID',
+                max_length=256,
+                null=True,
+                verbose_name='last_sync_job',
+            ),
         ),
     ]

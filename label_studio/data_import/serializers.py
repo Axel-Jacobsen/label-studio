@@ -4,13 +4,17 @@ from rest_framework import serializers
 
 from tasks.models import Task
 from tasks.serializers import (
-    TaskSerializer, AnnotationSerializer, PredictionSerializer, TaskSerializerBulk)
+    TaskSerializer,
+    AnnotationSerializer,
+    PredictionSerializer,
+    TaskSerializerBulk,
+)
 from .models import FileUpload
 
 
 class ImportApiSerializer(TaskSerializer):
-    """ Tasks serializer for Import API (TaskBulkCreateAPI)
-    """
+    """Tasks serializer for Import API (TaskBulkCreateAPI)"""
+
     annotations = AnnotationSerializer(many=True, default=[])
     predictions = PredictionSerializer(many=True, default=[])
 
@@ -26,4 +30,3 @@ class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileUpload
         fields = ['id', 'file']
-

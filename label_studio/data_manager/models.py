@@ -8,11 +8,20 @@ from data_manager.prepare_params import PrepareParams
 
 
 class ViewBaseModel(models.Model):
-    data = models.JSONField(_("data"), default=dict, null=True, help_text="Custom view data")
-    ordering = models.JSONField(_("ordering"), default=dict, null=True, help_text="Ordering parameters")
-    selected_items = models.JSONField(_("selected items"), default=dict, null=True, help_text="Selected items")
+    data = models.JSONField(
+        _("data"), default=dict, null=True, help_text="Custom view data"
+    )
+    ordering = models.JSONField(
+        _("ordering"), default=dict, null=True, help_text="Ordering parameters"
+    )
+    selected_items = models.JSONField(
+        _("selected items"), default=dict, null=True, help_text="Selected items"
+    )
     filter_group = models.ForeignKey(
-        "data_manager.FilterGroup", null=True, on_delete=models.SET_NULL, help_text="Groups of filters"
+        "data_manager.FilterGroup",
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="Groups of filters",
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -28,7 +37,10 @@ class ViewBaseModel(models.Model):
 
 class ProjectViewMixin(models.Model):
     project = models.ForeignKey(
-        "projects.Project", related_name="views", on_delete=models.CASCADE, help_text="Project ID"
+        "projects.Project",
+        related_name="views",
+        on_delete=models.CASCADE,
+        help_text="Project ID",
     )
 
     def has_permission(self, user):
@@ -66,14 +78,23 @@ class View(ViewBaseModel, ProjectViewMixin):
         if add_selected_items and self.selected_items:
             selected_items = self.selected_items
 
-        return PrepareParams(project=self.project_id, ordering=ordering, filters=filters,
-                             data=self.data, selectedItems=selected_items)
+        return PrepareParams(
+            project=self.project_id,
+            ordering=ordering,
+            filters=filters,
+            data=self.data,
+            selectedItems=selected_items,
+        )
 
 
 class FilterGroup(models.Model):
-    conjunction = models.CharField(_("conjunction"), max_length=1024, help_text="Type of conjunction")
+    conjunction = models.CharField(
+        _("conjunction"), max_length=1024, help_text="Type of conjunction"
+    )
     filters = models.ManyToManyField(
-        "data_manager.Filter", related_name="filter_groups", help_text="Connected filters"
+        "data_manager.Filter",
+        related_name="filter_groups",
+        help_text="Connected filters",
     )
 
 
@@ -81,5 +102,9 @@ class Filter(models.Model):
     index = models.IntegerField(_("index"), default=0, help_text="To keep filter order")
     column = models.CharField(_("column"), max_length=1024, help_text="Field name")
     type = models.CharField(_("type"), max_length=1024, help_text="Field type")
-    operator = models.CharField(_("operator"), max_length=1024, help_text="Filter operator")
-    value = models.JSONField(_("value"), default=dict, null=True, help_text="Filter value")
+    operator = models.CharField(
+        _("operator"), max_length=1024, help_text="Filter operator"
+    )
+    value = models.JSONField(
+        _("value"), default=dict, null=True, help_text="Filter value"
+    )

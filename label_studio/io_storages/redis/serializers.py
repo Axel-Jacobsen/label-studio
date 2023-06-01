@@ -8,7 +8,9 @@ from io_storages.redis.models import RedisImportStorage, RedisExportStorage
 
 
 class RedisImportStorageSerializer(ImportStorageSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     class Meta:
         model = RedisImportStorage
@@ -29,8 +31,11 @@ class RedisImportStorageSerializer(ImportStorageSerializer):
             raise ValidationError("Can't connect to Redis server.")
         return data
 
+
 class RedisExportStorageSerializer(ExportStorageSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     def to_representation(self, instance):
         result = super().to_representation(instance)

@@ -13,8 +13,10 @@ def forwards(apps, schema_editor):
     if settings.VERSION_EDITION == 'Community':
         run_command = 'label-studio calculate_stats_all_orgs'
     else:
-        run_command = 'cd /label-studio-enterprise/label_studio_enterprise && ' \
-                      'python3 manage.py calculate_stats_all_orgs'
+        run_command = (
+            'cd /label-studio-enterprise/label_studio_enterprise && '
+            'python3 manage.py calculate_stats_all_orgs'
+        )
 
     if '--skip-long-migrations' in sys.argv:
         logger.error(
@@ -24,7 +26,11 @@ def forwards(apps, schema_editor):
         return
 
     logger.debug('=> Starting calculate_stats_all_orgs for task counters again')
-    calculate_stats_all_orgs(from_scratch=True, redis=True, migration_name='data_manager-0008_manual_counters_update')
+    calculate_stats_all_orgs(
+        from_scratch=True,
+        redis=True,
+        migration_name='data_manager-0008_manual_counters_update',
+    )
 
 
 def backwards(apps, schema_editor):
@@ -34,7 +40,12 @@ def backwards(apps, schema_editor):
 class Migration(migrations.Migration):
     atomic = False
 
-    dependencies = [('data_manager', '0007_auto_20220708_0832'), ('tasks', '0023_auto_20220620_1007'), ('core', '0001_initial'), ('projects', '0017_project_pinned_at')]
+    dependencies = [
+        ('data_manager', '0007_auto_20220708_0832'),
+        ('tasks', '0023_auto_20220620_1007'),
+        ('core', '0001_initial'),
+        ('projects', '0017_project_pinned_at'),
+    ]
 
     operations = [
         migrations.RunPython(forwards, backwards),

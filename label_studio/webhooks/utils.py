@@ -50,9 +50,9 @@ def get_active_webhooks(organization, project, action):
         & (
             Q(send_for_all_actions=True)
             | Q(
-                id__in=WebhookAction.objects.filter(webhook__organization=organization, action=action).values_list(
-                    'webhook_id', flat=True
-                )
+                id__in=WebhookAction.objects.filter(
+                    webhook__organization=organization, action=action
+                ).values_list('webhook_id', flat=True)
             )
         )
     ).distinct()
@@ -62,7 +62,9 @@ def emit_webhooks(organization, project, action, payload):
     """Run all active webhooks for the action."""
     webhooks = get_active_webhooks(organization, project, action)
     if project and payload and webhooks.filter(send_payload=True).exists():
-        payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(instance=project).data
+        payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(
+            instance=project
+        ).data
     for wh in webhooks:
         run_webhook(wh, action, payload)
 
@@ -82,13 +84,18 @@ def emit_webhooks_for_instance(organization, project, action, instance=None):
     if instance and webhooks.filter(send_payload=True).exists():
         serializer_class = action_meta.get('serializer')
         if serializer_class:
-            payload[action_meta['key']] = serializer_class(instance=instance, many=action_meta['many']).data
+            payload[action_meta['key']] = serializer_class(
+                instance=instance, many=action_meta['many']
+            ).data
         if project and payload:
-            payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(instance=project).data
+            payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(
+                instance=project
+            ).data
         if payload and 'nested-fields' in action_meta:
             for key, value in action_meta['nested-fields'].items():
                 payload[key] = value['serializer'](
-                    instance=get_nested_field(instance, value['field']), many=value['many']
+                    instance=get_nested_field(instance, value['field']),
+                    many=value['many'],
                 ).data
     for wh in webhooks:
         run_webhook(wh, action, payload)
@@ -165,7 +172,9 @@ def api_webhook_for_delete(action):
 
             response = func(self, request, *args, **kwargs)
 
-            emit_webhooks_for_instance(request.user.active_organization, project, action, obj)
+            emit_webhooks_for_instance(
+                request.user.active_organization, project, action, obj
+            )
             return response
 
         return wrap

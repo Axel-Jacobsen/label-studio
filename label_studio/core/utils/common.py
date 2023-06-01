@@ -19,7 +19,9 @@ import traceback as tb
 import drf_yasg.openapi as openapi
 import contextlib
 
-from label_studio_tools.core.utils.exceptions import LabelStudioXMLSyntaxErrorSentryIgnored
+from label_studio_tools.core.utils.exceptions import (
+    LabelStudioXMLSyntaxErrorSentryIgnored,
+)
 
 import label_studio
 import re
@@ -49,6 +51,7 @@ from boxing import boxing
 
 try:
     from sentry_sdk import capture_exception, set_tag
+
     sentry_sdk_loaded = True
 except (ModuleNotFoundError, ImportError):
     sentry_sdk_loaded = False
@@ -71,7 +74,7 @@ def _override_exceptions(exc):
 
 
 def custom_exception_handler(exc, context):
-    """ Make custom exception treatment in RestFramework
+    """Make custom exception treatment in RestFramework
 
     :param exc: Exception - you can check specific exception
     :param context: context
@@ -95,13 +98,19 @@ def custom_exception_handler(exc, context):
     if response is not None:
         response_data['status_code'] = response.status_code
 
-        if 'detail' in response.data and isinstance(response.data['detail'], ErrorDetail):
+        if 'detail' in response.data and isinstance(
+            response.data['detail'], ErrorDetail
+        ):
             response_data['detail'] = response.data['detail']
             response.data = response_data
         # move validation errors to separate namespace
         else:
             response_data['detail'] = 'Validation error'
-            response_data['validation_errors'] = response.data if isinstance(response.data, dict) else {'non_field_errors': response.data}
+            response_data['validation_errors'] = (
+                response.data
+                if isinstance(response.data, dict)
+                else {'non_field_errors': response.data}
+            )
             response.data = response_data
 
     # non-standard exception
@@ -120,7 +129,9 @@ def custom_exception_handler(exc, context):
         if isinstance(exc, LabelStudioXMLSyntaxErrorSentryIgnored):
             response = Response(status=status.HTTP_400_BAD_REQUEST, data=response_data)
         else:
-            response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data)
+            response = Response(
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data
+            )
 
     return response
 
@@ -131,8 +142,9 @@ def create_hash():
     h.update(str(time.time()).encode('utf-8'))
     return h.hexdigest()[0:16]
 
+
 def paginator(objects, request, default_page=1, default_size=50):
-    """ DEPRECATED
+    """DEPRECATED
     TODO: change to standard drf pagination class
 
     Get from request page and page_size and return paginated objects
@@ -144,7 +156,9 @@ def paginator(objects, request, default_page=1, default_size=50):
     :return: paginated objects
     """
     page_size = request.GET.get('page_size', request.GET.get('length', default_size))
-    if settings.TASK_API_PAGE_SIZE_MAX and (int(page_size) > settings.TASK_API_PAGE_SIZE_MAX or page_size == '-1'):
+    if settings.TASK_API_PAGE_SIZE_MAX and (
+        int(page_size) > settings.TASK_API_PAGE_SIZE_MAX or page_size == '-1'
+    ):
         page_size = settings.TASK_API_PAGE_SIZE_MAX
 
     if 'start' in request.GET:
@@ -168,30 +182,42 @@ def paginator(objects, request, default_page=1, default_size=50):
 
 
 def paginator_help(objects_name, tag):
-    """ API help for paginator, use it with swagger_auto_schema
+    """API help for paginator, use it with swagger_auto_schema
 
     :return: dict
     """
     if settings.TASK_API_PAGE_SIZE_MAX:
         page_size_description = f'[or "length"] {objects_name} per page. Max value {settings.TASK_API_PAGE_SIZE_MAX}'
     else:
-        page_size_description = f'[or "length"] {objects_name} per page, use -1 to obtain all {objects_name} ' \
-                                 '(in this case "page" has no effect and this operation might be slow)'
-    return dict(tags=[tag], manual_parameters=[
-            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY,
-                              description='[or "start"] current page'),
-            openapi.Parameter(name='page_size', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY,
-                              description=page_size_description)
+        page_size_description = (
+            f'[or "length"] {objects_name} per page, use -1 to obtain all {objects_name} '
+            '(in this case "page" has no effect and this operation might be slow)'
+        )
+    return dict(
+        tags=[tag],
+        manual_parameters=[
+            openapi.Parameter(
+                name='page',
+                type=openapi.TYPE_INTEGER,
+                in_=openapi.IN_QUERY,
+                description='[or "start"] current page',
+            ),
+            openapi.Parameter(
+                name='page_size',
+                type=openapi.TYPE_INTEGER,
+                in_=openapi.IN_QUERY,
+                description=page_size_description,
+            ),
         ],
         responses={
             200: openapi.Response(title='OK', description='')
             # 404: openapi.Response(title='', description=f'No more {objects_name} found')
-        })
+        },
+    )
 
 
 def find_editor_files():
-    """ Find label studio files
-    """
+    """Find label studio files"""
 
     # playground uses another LSF build
     prefix = '/label-studio/'
@@ -199,9 +225,13 @@ def find_editor_files():
 
     # find editor files to include in html
     editor_js_dir = os.path.join(editor_dir, 'js')
-    editor_js = [prefix + 'js/' + f for f in os.listdir(editor_js_dir) if f.endswith('.js')]
+    editor_js = [
+        prefix + 'js/' + f for f in os.listdir(editor_js_dir) if f.endswith('.js')
+    ]
     editor_css_dir = os.path.join(editor_dir, 'css')
-    editor_css = [prefix + 'css/' + f for f in os.listdir(editor_css_dir) if f.endswith('.css')]
+    editor_css = [
+        prefix + 'css/' + f for f in os.listdir(editor_css_dir) if f.endswith('.css')
+    ]
     return {'editor_js': editor_js, 'editor_css': editor_css}
 
 
@@ -230,7 +260,7 @@ def sample_query(q, sample_size):
 
 
 def get_client_ip(request):
-    """ Get IP address from django request
+    """Get IP address from django request
 
     :param request: django request
     :return: str with ip
@@ -281,6 +311,7 @@ def find_first_one_to_one_related_field_by_prefix(instance, prefix):
 def start_browser(ls_url, no_browser):
     import threading
     import webbrowser
+
     if no_browser:
         return
 
@@ -319,7 +350,9 @@ def retry_database_locked():
                     else:
                         raise
             return f(*args, **kwargs)
+
         return f_retry
+
     return deco_retry
 
 
@@ -332,14 +365,17 @@ def get_app_version():
 
 
 def get_latest_version():
-    """ Get version from pypi
-    """
+    """Get version from pypi"""
     pypi_url = 'https://pypi.org/pypi/%s/json' % label_studio.package_name
     try:
         response = requests.get(pypi_url, timeout=10).text
         data = json.loads(response)
         latest_version = data['info']['version']
-        upload_time = data.get('releases', {}).get(latest_version, [{}])[-1].get('upload_time', None)
+        upload_time = (
+            data.get('releases', {})
+            .get(latest_version, [{}])[-1]
+            .get('upload_time', None)
+        )
     except Exception as exc:
         logger.warning("Can't get latest version", exc_info=True)
     else:
@@ -353,8 +389,7 @@ def current_version_is_outdated(latest_version):
 
 
 def check_for_the_latest_version(print_message):
-    """ Check latest pypi version
-    """
+    """Check latest pypi version"""
     if not settings.LATEST_VERSION_CHECK:
         return
 
@@ -362,8 +397,10 @@ def check_for_the_latest_version(print_message):
 
     # prevent excess checks by time intervals
     current_time = time.time()
-    if label_studio.__latest_version_check_time__ and \
-       current_time - label_studio.__latest_version_check_time__ < 60:
+    if (
+        label_studio.__latest_version_check_time__
+        and current_time - label_studio.__latest_version_check_time__ < 60
+    ):
         return
     label_studio.__latest_version_check_time__ = current_time
 
@@ -374,13 +411,17 @@ def check_for_the_latest_version(print_message):
     outdated = latest_version and current_version_is_outdated(latest_version)
 
     def update_package_message():
-        update_command = Fore.CYAN + 'pip install -U ' + label_studio.package_name + Fore.RESET
+        update_command = (
+            Fore.CYAN + 'pip install -U ' + label_studio.package_name + Fore.RESET
+        )
         return boxing(
             'Update available {curr_version} → {latest_version}\nRun {command}'.format(
                 curr_version=label_studio.__version__,
                 latest_version=latest_version,
-                command=update_command
-            ), style='double')
+                command=update_command,
+            ),
+            style='double',
+        )
 
     if outdated and print_message:
         print(update_package_message())
@@ -397,7 +438,7 @@ if settings.APP_WEBSERVER != 'uwsgi':
 
 
 def collect_versions(force=False):
-    """ Collect versions for all modules
+    """Collect versions for all modules
 
     :return: dict with sub-dicts of version descriptions
     """
@@ -419,10 +460,10 @@ def collect_versions(force=False):
             'short_version': '.'.join(label_studio.__version__.split('.')[:2]),
             'latest_version_from_pypi': label_studio.__latest_version__,
             'latest_version_upload_time': label_studio.__latest_version_upload_time__,
-            'current_version_is_outdated': label_studio.__current_version_is_outdated__
+            'current_version_is_outdated': label_studio.__current_version_is_outdated__,
         },
         # backend full git info
-        'label-studio-os-backend': version.get_git_commit_info(ls=True)
+        'label-studio-os-backend': version.get_git_commit_info(ls=True),
     }
 
     # label studio frontend
@@ -444,13 +485,17 @@ def collect_versions(force=False):
     # converter
     try:
         import label_studio_converter
-        result['label-studio-converter'] = {'version': label_studio_converter.__version__}
+
+        result['label-studio-converter'] = {
+            'version': label_studio_converter.__version__
+        }
     except Exception as e:
         pass
 
     # ml
     try:
         import label_studio_ml
+
         result['label-studio-ml'] = {'version': label_studio_ml.__version__}
     except Exception as e:
         pass
@@ -463,6 +508,7 @@ def collect_versions(force=False):
 
     if settings.SENTRY_DSN:
         import sentry_sdk
+
         sentry_sdk.set_context("versions", copy.deepcopy(result))
 
         for package in result:
@@ -476,7 +522,7 @@ def collect_versions(force=False):
 
 
 def get_organization_from_request(request):
-    """Helper for backward compatibility with org_pk in session """
+    """Helper for backward compatibility with org_pk in session"""
     # TODO remove session logic in next release
     user = request.user
     if user and user.is_authenticated:
@@ -514,13 +560,14 @@ def import_from_string(func_string):
 
 
 class temporary_disconnect_signal:
-    """ Temporarily disconnect a model from a signal
+    """Temporarily disconnect a model from a signal
 
-        Example:
-            with temporary_disconnect_all_signals(
-                signals.post_delete, update_is_labeled_after_removing_annotation, Annotation):
-                do_something()
+    Example:
+        with temporary_disconnect_all_signals(
+            signals.post_delete, update_is_labeled_after_removing_annotation, Annotation):
+            do_something()
     """
+
     def __init__(self, signal, receiver, sender, dispatch_uid=None):
         self.signal = signal
         self.receiver = receiver
@@ -529,16 +576,12 @@ class temporary_disconnect_signal:
 
     def __enter__(self):
         self.signal.disconnect(
-            receiver=self.receiver,
-            sender=self.sender,
-            dispatch_uid=self.dispatch_uid
+            receiver=self.receiver, sender=self.sender, dispatch_uid=self.dispatch_uid
         )
 
     def __exit__(self, type_, value, traceback):
         self.signal.connect(
-            receiver=self.receiver,
-            sender=self.sender,
-            dispatch_uid=self.dispatch_uid
+            receiver=self.receiver, sender=self.sender, dispatch_uid=self.dispatch_uid
         )
 
 
@@ -546,10 +589,14 @@ class temporary_disconnect_all_signals(object):
     def __init__(self, disabled_signals=None):
         self.stashed_signals = defaultdict(list)
         self.disabled_signals = disabled_signals or [
-            pre_init, post_init,
-            pre_save, post_save,
-            pre_delete, post_delete,
-            pre_migrate, post_migrate,
+            pre_init,
+            post_init,
+            pre_save,
+            post_save,
+            pre_delete,
+            post_delete,
+            pre_migrate,
+            post_migrate,
         ]
 
     def __enter__(self):
@@ -572,10 +619,16 @@ class temporary_disconnect_all_signals(object):
 class DjangoFilterDescriptionInspector(CoreAPICompatInspector):
     def get_filter_parameters(self, filter_backend):
         if isinstance(filter_backend, DjangoFilterBackend):
-            result = super(DjangoFilterDescriptionInspector, self).get_filter_parameters(filter_backend)
+            result = super(
+                DjangoFilterDescriptionInspector, self
+            ).get_filter_parameters(filter_backend)
             for param in result:
                 if not param.get('description', ''):
-                    param.description = "Filter the returned list by {field_name}".format(field_name=param.name)
+                    param.description = (
+                        "Filter the returned list by {field_name}".format(
+                            field_name=param.name
+                        )
+                    )
 
             return result
 
@@ -599,14 +652,15 @@ def round_floats(o):
 
 
 class temporary_disconnect_list_signal:
-    """ Temporarily disconnect a list of signals
-        Each signal tuple: (signal_type, signal_method, object)
-        Example:
-            with temporary_disconnect_list_signal(
-                [(signals.post_delete, update_is_labeled_after_removing_annotation, Annotation)]
-                ):
-                do_something()
+    """Temporarily disconnect a list of signals
+    Each signal tuple: (signal_type, signal_method, object)
+    Example:
+        with temporary_disconnect_list_signal(
+            [(signals.post_delete, update_is_labeled_after_removing_annotation, Annotation)]
+            ):
+            do_something()
     """
+
     def __init__(self, signals):
         self.signals = signals
 
@@ -616,11 +670,7 @@ class temporary_disconnect_list_signal:
             receiver = signal[1]
             sender = signal[2]
             dispatch_uid = signal[3] if len(signal) > 3 else None
-            sig.disconnect(
-                receiver=receiver,
-                sender=sender,
-                dispatch_uid=dispatch_uid
-            )
+            sig.disconnect(receiver=receiver, sender=sender, dispatch_uid=dispatch_uid)
 
     def __exit__(self, type_, value, traceback):
         for signal in self.signals:
@@ -628,11 +678,7 @@ class temporary_disconnect_list_signal:
             receiver = signal[1]
             sender = signal[2]
             dispatch_uid = signal[3] if len(signal) > 3 else None
-            sig.connect(
-                receiver=receiver,
-                sender=sender,
-                dispatch_uid=dispatch_uid
-            )
+            sig.connect(receiver=receiver, sender=sender, dispatch_uid=dispatch_uid)
 
 
 def trigram_migration_operations(next_step):
@@ -641,10 +687,12 @@ def trigram_migration_operations(next_step):
         next_step,
     ]
     SKIP_TRIGRAM_EXTENSION = get_env('SKIP_TRIGRAM_EXTENSION', None)
-    if SKIP_TRIGRAM_EXTENSION == '1' or SKIP_TRIGRAM_EXTENSION == 'yes' or SKIP_TRIGRAM_EXTENSION == 'true':
-        ops = [
-            next_step
-        ]
+    if (
+        SKIP_TRIGRAM_EXTENSION == '1'
+        or SKIP_TRIGRAM_EXTENSION == 'yes'
+        or SKIP_TRIGRAM_EXTENSION == 'true'
+    ):
+        ops = [next_step]
     if SKIP_TRIGRAM_EXTENSION == 'full':
         ops = []
 
@@ -657,10 +705,12 @@ def btree_gin_migration_operations(next_step):
         next_step,
     ]
     SKIP_BTREE_GIN_EXTENSION = get_env('SKIP_BTREE_GIN_EXTENSION', None)
-    if SKIP_BTREE_GIN_EXTENSION == '1' or SKIP_BTREE_GIN_EXTENSION == 'yes' or SKIP_BTREE_GIN_EXTENSION == 'true':
-        ops = [
-            next_step
-        ]
+    if (
+        SKIP_BTREE_GIN_EXTENSION == '1'
+        or SKIP_BTREE_GIN_EXTENSION == 'yes'
+        or SKIP_BTREE_GIN_EXTENSION == 'true'
+    ):
+        ops = [next_step]
     if SKIP_BTREE_GIN_EXTENSION == 'full':
         ops = []
 
@@ -708,4 +758,5 @@ def timeit(func):
         end = time.time()
         logging.debug(f"{func.__name__} execution time: {end-start} seconds")
         return result
+
     return wrapper

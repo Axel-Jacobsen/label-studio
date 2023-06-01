@@ -31,7 +31,12 @@ def test_views_tasks_api(business_client, project_id):
     task_data = {"text": "bbb"}
     task_id = make_task({"data": task_data}, project).id
 
-    annotation_result = {"from_name": "my_class", "to_name": "text", "type": "choices", "value": {"choices": ["pos"]}}
+    annotation_result = {
+        "from_name": "my_class",
+        "to_name": "text",
+        "type": "choices",
+        "value": {"choices": ["pos"]},
+    }
     make_annotation({"result": [annotation_result]}, task_id)
     make_annotation(
         {
@@ -40,7 +45,12 @@ def test_views_tasks_api(business_client, project_id):
         },
         task_id,
     )
-    prediction_result = {"from_name": "my_class", "to_name": "text", "type": "choices", "value": {"choices": ["pos"]}}
+    prediction_result = {
+        "from_name": "my_class",
+        "to_name": "text",
+        "type": "choices",
+        "value": {"choices": ["pos"]},
+    }
     make_prediction(
         {
             "result": [prediction_result],
@@ -98,7 +108,9 @@ def test_views_tasks_api(business_client, project_id):
     ],
 )
 @pytest.mark.django_db
-def test_views_total_counters(tasks_count, annotations_count, predictions_count, business_client, project_id):
+def test_views_total_counters(
+    tasks_count, annotations_count, predictions_count, business_client, project_id
+):
     # create
     payload = dict(project=project_id, data={"test": 1})
     response = business_client.post(
@@ -125,5 +137,9 @@ def test_views_total_counters(tasks_count, annotations_count, predictions_count,
     response_data = response.json()
 
     assert response_data["total"] == tasks_count, response_data
-    assert response_data["total_annotations"] == tasks_count * annotations_count, response_data
-    assert response_data["total_predictions"] == tasks_count * predictions_count, response_data
+    assert (
+        response_data["total_annotations"] == tasks_count * annotations_count
+    ), response_data
+    assert (
+        response_data["total_predictions"] == tasks_count * predictions_count
+    ), response_data

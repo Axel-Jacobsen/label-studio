@@ -12,7 +12,6 @@ from projects.models import Project
 
 @pytest.mark.django_db
 class TestPresignStorageData:
-
     @pytest.fixture
     def view(self):
         view = PresignStorageData.as_view()
@@ -35,12 +34,14 @@ class TestPresignStorageData:
     @pytest.fixture
     def user(self):
         user = User.objects.create_user(
-            username="testuser", email="testuser@email.com", password="testpassword")
+            username="testuser", email="testuser@email.com", password="testpassword"
+        )
         return user
 
     def test_missing_parameters(self, view, user):
         request = APIRequestFactory().get(
-            reverse("data_import:storage-data-presign", kwargs={"task_id": 1}))
+            reverse("data_import:storage-data-presign", kwargs={"task_id": 1})
+        )
 
         request.user = user
         force_authenticate(request, user)
@@ -49,8 +50,10 @@ class TestPresignStorageData:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_task_not_found(self, view, user):
-        request = APIRequestFactory().get(reverse("data_import:storage-data-presign",
-                                                  kwargs={"task_id": 2}) + "?fileuri=fileuri")
+        request = APIRequestFactory().get(
+            reverse("data_import:storage-data-presign", kwargs={"task_id": 2})
+            + "?fileuri=fileuri"
+        )
         request.user = user
         force_authenticate(request, user)
         response = view(request, task_id=2)
@@ -72,8 +75,10 @@ class TestPresignStorageData:
         obj.get = mock_task_get
         monkeypatch.setattr('tasks.models.Task.objects', obj)
 
-        request = APIRequestFactory().get(reverse("data_import:storage-data-presign",
-                                                  kwargs={"task_id": 1}) + "?fileuri=fileuri")
+        request = APIRequestFactory().get(
+            reverse("data_import:storage-data-presign", kwargs={"task_id": 1})
+            + "?fileuri=fileuri"
+        )
         request.user = user
         force_authenticate(request, user)
         response = view(request, task_id=1)
@@ -82,8 +87,7 @@ class TestPresignStorageData:
 
     def test_successful_request(self, view, task, project, user, monkeypatch):
         task.resolve_storage_uri.return_value = dict(
-            url="https://presigned-url.com/file",
-            presign_ttl=3600
+            url="https://presigned-url.com/file", presign_ttl=3600
         )
         project.has_permission.return_value = True
         task.project = project
@@ -98,8 +102,10 @@ class TestPresignStorageData:
         obj.get = mock_task_get
         monkeypatch.setattr('tasks.models.Task.objects', obj)
 
-        request = APIRequestFactory().get(reverse("data_import:storage-data-presign",
-                                                  kwargs={"task_id": 1}) + "?fileuri=fileuri")
+        request = APIRequestFactory().get(
+            reverse("data_import:storage-data-presign", kwargs={"task_id": 1})
+            + "?fileuri=fileuri"
+        )
         request.user = user
         force_authenticate(request, user)
 

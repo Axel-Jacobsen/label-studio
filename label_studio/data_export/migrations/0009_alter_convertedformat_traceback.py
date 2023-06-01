@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('data_export', '0008_convertedformat_traceback'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='convertedformat',
             name='traceback',
-            field=models.TextField(blank=True, help_text='Traceback report in case of errors', null=True),
+            field=models.TextField(
+                blank=True, help_text='Traceback report in case of errors', null=True
+            ),
         ),
     ]

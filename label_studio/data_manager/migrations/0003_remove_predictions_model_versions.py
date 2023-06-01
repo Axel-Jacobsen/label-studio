@@ -10,11 +10,19 @@ def remove(apps, schema_editor):
     for view in views:
         if 'hiddenColumns' in view.data:
             if 'explore' in view.data['hiddenColumns']:
-                view.data['hiddenColumns']['explore'].append('tasks:predictions_model_versions')
-                view.data['hiddenColumns']['explore'] = list(set(view.data['hiddenColumns']['explore']))
+                view.data['hiddenColumns']['explore'].append(
+                    'tasks:predictions_model_versions'
+                )
+                view.data['hiddenColumns']['explore'] = list(
+                    set(view.data['hiddenColumns']['explore'])
+                )
             if 'labeling' in view.data['hiddenColumns']:
-                view.data['hiddenColumns']['labeling'].append('tasks:predictions_model_versions')
-                view.data['hiddenColumns']['labeling'] = list(set(view.data['hiddenColumns']['labeling']))
+                view.data['hiddenColumns']['labeling'].append(
+                    'tasks:predictions_model_versions'
+                )
+                view.data['hiddenColumns']['labeling'] = list(
+                    set(view.data['hiddenColumns']['labeling'])
+                )
 
         view.save()
 

@@ -10,17 +10,19 @@ class Command(BaseCommand):
             dest='from_scratch',
             action='store_true',
             default=False,
-            help='Start recalculation from scratch'
+            help='Start recalculation from scratch',
         )
         parser.add_argument(
             '--redis',
             dest='redis',
             action='store_true',
             default=False,
-            help='Use rq workers with redis (async background processing)'
+            help='Use rq workers with redis (async background processing)',
         )
 
     def handle(self, *args, **options):
         from tasks.functions import calculate_stats_all_orgs
 
-        calculate_stats_all_orgs(from_scratch=options['from_scratch'], redis=options['redis'])
+        calculate_stats_all_orgs(
+            from_scratch=options['from_scratch'], redis=options['redis']
+        )

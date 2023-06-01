@@ -19,7 +19,9 @@ def predictions_to_annotations(project, queryset, **kwargs):
     user = request.user
     model_version = request.data.get('model_version')
     queryset = queryset.filter(predictions__isnull=False)
-    predictions = Prediction.objects.filter(task__in=queryset, child_annotations__isnull=True)
+    predictions = Prediction.objects.filter(
+        task__in=queryset, child_annotations__isnull=True
+    )
 
     # model version filter
     if model_version is not None:
@@ -28,9 +30,9 @@ def predictions_to_annotations(project, queryset, **kwargs):
         else:
             predictions = predictions.filter(model_version=model_version)
 
-    predictions_values = list(predictions.values_list(
-        'result', 'model_version', 'task_id', 'id'
-    ))
+    predictions_values = list(
+        predictions.values_list('result', 'model_version', 'task_id', 'id')
+    )
 
     # prepare annotations
     annotations = []
@@ -51,14 +53,23 @@ def predictions_to_annotations(project, queryset, **kwargs):
     logger.debug(f'{count} predictions will be converter to annotations')
     db_annotations = [Annotation(**annotation) for annotation in annotations]
     db_annotations = Annotation.objects.bulk_create(db_annotations)
-    Task.objects.filter(id__in=tasks_ids).update(updated_at=now(), updated_by=request.user)
+    Task.objects.filter(id__in=tasks_ids).update(
+        updated_at=now(), updated_by=request.user
+    )
 
     if db_annotations:
         TaskSerializerBulk.post_process_annotations(user, db_annotations, 'prediction')
         # Execute webhook for created annotations
-        emit_webhooks_for_instance(user.active_organization, project, WebhookAction.ANNOTATIONS_CREATED, db_annotations)
+        emit_webhooks_for_instance(
+            user.active_organization,
+            project,
+            WebhookAction.ANNOTATIONS_CREATED,
+            db_annotations,
+        )
         # Update counters for tasks and is_labeled. It should be a single operation as counters affect bulk is_labeled update
-        project.update_tasks_counters_and_is_labeled(Task.objects.filter(id__in=tasks_ids))
+        project.update_tasks_counters_and_is_labeled(
+            Task.objects.filter(id__in=tasks_ids)
+        )
     return {'response_code': 200, 'detail': f'Created {count} annotations'}
 
 
@@ -74,15 +85,19 @@ def predictions_to_annotations_form(user, project):
             pass
         versions = [first] + versions
 
-    return [{
-        'columnCount': 1,
-        'fields': [{
-            'type': 'select',
-            'name': 'model_version',
-            'label': 'Choose a model',
-            'options': versions,
-        }]
-    }]
+    return [
+        {
+            'columnCount': 1,
+            'fields': [
+                {
+                    'type': 'select',
+                    'name': 'model_version',
+                    'label': 'Choose a model',
+                    'options': versions,
+                }
+            ],
+        }
+    ]
 
 
 actions = [
@@ -93,9 +108,9 @@ actions = [
         'order': 91,
         'dialog': {
             'text': 'This action will create new annotations from predictions with the selected model version '
-                    'for each selected task.',
+            'for each selected task.',
             'type': 'confirm',
             'form': predictions_to_annotations_form,
-        }
+        },
     }
 ]

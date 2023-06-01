@@ -46,9 +46,7 @@ def find_node(package_name, node_path, node_type):
         elif node_path in nodes:
             return os.path.join(path, node_path)
     else:
-        raise IOError(
-            'Could not find "%s" at package "%s"' % (node_path, basedir)
-        )
+        raise IOError('Could not find "%s" at package "%s"' % (node_path, basedir))
 
 
 def find_file(file):
@@ -174,11 +172,10 @@ def url_is_local(url):
         ip = socket.gethostbyname(domain)
     except socket.error:
         from core.utils.exceptions import LabelStudioAPIException
+
         raise LabelStudioAPIException(f"Can't resolve hostname {domain}")
     else:
-        if ip in (
-            '0.0.0.0', # nosec
-        ):
+        if ip in ('0.0.0.0',):  # nosec
             return True
         local_subnets = [
             '127.0.0.0/8',

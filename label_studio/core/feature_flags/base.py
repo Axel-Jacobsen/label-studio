@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_feature_file_path():
-    package_name = 'label_studio' if settings.VERSION_EDITION == 'Community' else 'label_studio_enterprise'
+    package_name = (
+        'label_studio'
+        if settings.VERSION_EDITION == 'Community'
+        else 'label_studio_enterprise'
+    )
     if settings.FEATURE_FLAGS_FILE.startswith('/'):
         return settings.FEATURE_FLAGS_FILE
     else:
@@ -37,41 +41,54 @@ if settings.FEATURE_FLAGS_FROM_FILE:
     config = Config(
         sdk_key=settings.FEATURE_FLAGS_API_KEY or 'whatever',
         update_processor_class=data_source,
-        send_events=False)
+        send_events=False,
+    )
     ldclient.set_config(config)
     client = ldclient.get()
 elif settings.FEATURE_FLAGS_OFFLINE:
     # On-prem usage, without feature flags file
-    ldclient.set_config(Config(settings.FEATURE_FLAGS_API_KEY or 'whatever', offline=True))
+    ldclient.set_config(
+        Config(settings.FEATURE_FLAGS_API_KEY or 'whatever', offline=True)
+    )
     client = ldclient.get()
 else:
     # Production usage
     if hasattr(settings, 'REDIS_LOCATION'):
-        logger.debug(f'Set LaunchDarkly config with Redis feature store at {settings.REDIS_LOCATION}')
+        logger.debug(
+            f'Set LaunchDarkly config with Redis feature store at {settings.REDIS_LOCATION}'
+        )
         store = Redis.new_feature_store(
             url=settings.REDIS_LOCATION,
             prefix='feature-flags',
-            caching=CacheConfig(expiration=30))
-        ldclient.set_config(Config(
-            settings.FEATURE_FLAGS_API_KEY,
-            feature_store=store,
-            http=HTTPConfig(connect_timeout=5)
-        ))
+            caching=CacheConfig(expiration=30),
+        )
+        ldclient.set_config(
+            Config(
+                settings.FEATURE_FLAGS_API_KEY,
+                feature_store=store,
+                http=HTTPConfig(connect_timeout=5),
+            )
+        )
     else:
         logger.debug('Set LaunchDarkly config without Redis...')
-        ldclient.set_config(Config(settings.FEATURE_FLAGS_API_KEY, http=HTTPConfig(connect_timeout=5)))
+        ldclient.set_config(
+            Config(settings.FEATURE_FLAGS_API_KEY, http=HTTPConfig(connect_timeout=5))
+        )
     client = ldclient.get()
 
 
 def _get_user_repr(user):
     """Turn user object into dict with required properties"""
     from users.serializers import UserSerializer
+
     if user.is_anonymous:
         return {'key': str(user), 'custom': {'organization': None}}
     user_data = UserSerializer(user).data
     user_data['key'] = user_data['email']
     if user.active_organization is not None:
-        user_data['custom'] = {'organization': user.active_organization.created_by.email}
+        user_data['custom'] = {
+            'organization': user.active_organization.created_by.email
+        }
     else:
         user_data['custom'] = {'organization': None}
     return user_data

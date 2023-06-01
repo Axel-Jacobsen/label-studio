@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('io_storages', '0004_gcsstoragemixin_google_application_credentials'),
     ]
@@ -13,6 +12,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='s3importstorage',
             name='recursive_scan',
-            field=models.BooleanField(default=False, help_text='Perform recursive scan over the bucket content', verbose_name='recursive scan'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Perform recursive scan over the bucket content',
+                verbose_name='recursive scan',
+            ),
         ),
     ]

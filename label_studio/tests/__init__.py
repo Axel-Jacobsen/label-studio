@@ -7,4 +7,6 @@ try:
 
     HEADER_VALIDATORS[FormattedString] = HEADER_VALIDATORS[str]
 except ImportError:
-    print('\n Your requests version is under 2.28 and it does not support HEADER_VALIDATORS. \n')
+    print(
+        '\n Your requests version is under 2.28 and it does not support HEADER_VALIDATORS. \n'
+    )

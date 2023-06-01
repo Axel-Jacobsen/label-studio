@@ -60,11 +60,17 @@ def run_task_predictions(client, project, mocker):
         def __init__(self, job_id):
             self.id = job_id
 
-    m = MLBackend.objects.filter(project=project.id).filter(url='http://localhost:8999').first()
+    m = (
+        MLBackend.objects.filter(project=project.id)
+        .filter(url='http://localhost:8999')
+        .first()
+    )
     return client.post(f'/api/ml/{m.id}/predict')
 
 
-@pytest.mark.skipif(not redis_healthcheck(), reason='Starting predictions requires Redis server enabled')
+@pytest.mark.skipif(
+    not redis_healthcheck(), reason='Starting predictions requires Redis server enabled'
+)
 @pytest.mark.parametrize(
     'project_config, tasks, annotations, prediction_results, log_messages, model_version_in_request, use_ground_truth',
     [
@@ -158,7 +164,6 @@ def test_predictions(
     use_ground_truth,
     mocker,
 ):
-
     # create project with predefined task set
     project = make_project(project_config, business_client.user)
 
@@ -169,10 +174,18 @@ def test_predictions(
 
     # run prediction
     with requests_mock.Mocker() as m:
-        m.post('http://localhost:8999/setup', text=json.dumps({'model_version': model_version_in_request}))
+        m.post(
+            'http://localhost:8999/setup',
+            text=json.dumps({'model_version': model_version_in_request}),
+        )
         m.post(
             'http://localhost:8999/predict',
-            text=json.dumps({'results': prediction_results[:1], 'model_version': model_version_in_request}),
+            text=json.dumps(
+                {
+                    'results': prediction_results[:1],
+                    'model_version': model_version_in_request,
+                }
+            ),
         )
         r = run_task_predictions(business_client, project, mocker)
         assert r.status_code == 200
@@ -185,13 +198,17 @@ def test_predictions(
 
     assert predictions.count() == len(tasks)
 
-    for actual_prediction, expected_prediction_result in zip(predictions, prediction_results):
+    for actual_prediction, expected_prediction_result in zip(
+        predictions, prediction_results
+    ):
         assert actual_prediction.result == prediction_results[0]['result']
         assert actual_prediction.score == prediction_results[0]['score']
         assert ml_backend.model_version == actual_prediction.model_version
 
 
-@pytest.mark.skipif(not redis_healthcheck(), reason='Starting predictions requires Redis server enabled')
+@pytest.mark.skipif(
+    not redis_healthcheck(), reason='Starting predictions requires Redis server enabled'
+)
 @pytest.mark.parametrize(
     'test_name, project_config, setup_returns_model_version, tasks, annotations, '
     'input_predictions, prediction_call_count, num_project_stats, num_ground_truth_in_stats, '
@@ -223,14 +240,24 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345_old',
                 },
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_B']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_B']},
+                        }
                     ],
                     'score': 0.59,
                     'model_version': '12345_old',
@@ -269,14 +296,24 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
                 },
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_B']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_B']},
+                        }
                     ],
                     'score': 0.59,
                     'model_version': '12345',
@@ -315,14 +352,24 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
                 },
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_B']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_B']},
+                        }
                     ],
                     'score': 0.59,
                     'model_version': '12345_old',
@@ -361,14 +408,24 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
                 },
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_B']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_B']},
+                        }
                     ],
                     'score': 0.59,
                     'model_version': '12345_old',
@@ -438,7 +495,12 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
@@ -477,7 +539,12 @@ def test_predictions(
                 None,
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'ground_truth': True,
                 },
@@ -486,7 +553,12 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
@@ -526,7 +598,12 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345_old',
@@ -566,7 +643,12 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345_old',
@@ -606,14 +688,24 @@ def test_predictions(
             [
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345_old',
                 },
                 {
                     'result': [
-                        {'from_name': 'cls', 'to_name': 'txt', 'type': 'choices', 'value': {'choices': ['class_A']}}
+                        {
+                            'from_name': 'cls',
+                            'to_name': 'txt',
+                            'type': 'choices',
+                            'value': {'choices': ['class_A']},
+                        }
                     ],
                     'score': 0.95,
                     'model_version': '12345',
@@ -658,7 +750,9 @@ def test_predictions_with_partially_predicted_tasks(
     # run prediction
     with requests_mock.Mocker() as m:
         m.register_uri(
-            'POST', 'http://localhost:8999/setup', text=json.dumps({'model_version': setup_returns_model_version})
+            'POST',
+            'http://localhost:8999/setup',
+            text=json.dumps({'model_version': setup_returns_model_version}),
         )  # noqa
         m.register_uri(
             'POST',
@@ -685,12 +779,18 @@ def test_predictions_with_partially_predicted_tasks(
 
         r = run_task_predictions(business_client, project, mocker)
         assert r.status_code == 200
-        assert len(list(filter(lambda h: h.url.endswith('predict'), m.request_history))) == prediction_call_count
+        assert (
+            len(list(filter(lambda h: h.url.endswith('predict'), m.request_history)))
+            == prediction_call_count
+        )
 
         assert Prediction.objects.filter(
             task__project=project.id, model_version=setup_returns_model_version
         ).count() == len(tasks)
-        assert MLBackend.objects.get(url='http://localhost:8999').model_version == setup_returns_model_version
+        assert (
+            MLBackend.objects.get(url='http://localhost:8999').model_version
+            == setup_returns_model_version
+        )
 
 
 @pytest.mark.django_db
@@ -703,7 +803,12 @@ def test_interactive_annotating(business_client, configured_project):
     task = configured_project.tasks.first()
     # run prediction
     with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri('POST', f'{ml_backend.url}/predict', json={'results': [{'x': 'x'}]}, status_code=200)
+        m.register_uri(
+            'POST',
+            f'{ml_backend.url}/predict',
+            json={'results': [{'x': 'x'}]},
+            status_code=200,
+        )
 
         r = business_client.post(
             f'/api/ml/{ml_backend.pk}/interactive-annotating',
@@ -752,7 +857,12 @@ def test_interactive_annotating_failing(business_client, configured_project):
 
     # BAD ML RESPONSE
     with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri('POST', f'{ml_backend.url}/predict', json={'kebab': [[['eat']]]}, status_code=200)
+        m.register_uri(
+            'POST',
+            f'{ml_backend.url}/predict',
+            json={'kebab': [[['eat']]]},
+            status_code=200,
+        )
 
         r = business_client.post(
             f'/api/ml/{ml_backend.pk}/interactive-annotating',
@@ -791,7 +901,12 @@ def test_interactive_annotating_with_drafts(business_client, configured_project)
     AnnotationDraft.objects.create(task=task, user=users[1], result={}, lead_time=2)
     # run prediction
     with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri('POST', f'{ml_backend.url}/predict', json={'results': [{'x': 'x'}]}, status_code=200)
+        m.register_uri(
+            'POST',
+            f'{ml_backend.url}/predict',
+            json={'results': [{'x': 'x'}]},
+            status_code=200,
+        )
 
         r = business_client.post(
             f'/api/ml/{ml_backend.pk}/interactive-annotating',

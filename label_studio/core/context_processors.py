@@ -7,14 +7,11 @@ from core.feature_flags import all_flags
 
 def sentry_fe(request):
     # return the value you want as a dictionary, you may add multiple values in there
-    return {
-        'SENTRY_FE': django_settings.SENTRY_FE
-    }
+    return {'SENTRY_FE': django_settings.SENTRY_FE}
 
 
 def settings(request):
-    """ Make available django settings on each template page
-    """
+    """Make available django settings on each template page"""
     versions = collect_versions()
 
     # django templates can't access names with hyphens
@@ -23,9 +20,13 @@ def settings(request):
 
     versions['backend'] = {}
     if 'label-studio-os-backend' in versions:
-        versions['backend']['commit'] = versions['label-studio-os-backend'].get('commit', 'none')[0:6]
+        versions['backend']['commit'] = versions['label-studio-os-backend'].get(
+            'commit', 'none'
+        )[0:6]
     if 'label-studio-enterprise-backend' in versions:
-        versions['backend']['commit'] = versions['label-studio-enterprise-backend'].get('commit', 'none')[0:6]
+        versions['backend']['commit'] = versions['label-studio-enterprise-backend'].get(
+            'commit', 'none'
+        )[0:6]
 
     if 'dm2' in versions:
         versions['dm2']['commit'] = versions['dm2'].get('commit', 'none')[0:6]
@@ -37,5 +38,5 @@ def settings(request):
     return {
         'settings': django_settings,
         'versions': versions,
-        'feature_flags': feature_flags
+        'feature_flags': feature_flags,
     }

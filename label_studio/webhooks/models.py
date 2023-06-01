@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from projects.models import Project
 from tasks.models import Annotation, Task
 from labels_manager.models import LabelLink
+
 # from labels_manager.serializers import LabelLinkSerializer, LabelSerializer
 
 
@@ -33,16 +34,26 @@ class Webhook(models.Model):
     If webhook has not null project field -- it's project webhook
     """
 
-    organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE, related_name='webhooks')
-
-    project = models.ForeignKey(
-        'projects.Project', null=True, on_delete=models.CASCADE, related_name='webhooks', default=None
+    organization = models.ForeignKey(
+        'organizations.Organization', on_delete=models.CASCADE, related_name='webhooks'
     )
 
-    url = models.URLField(_('URL of webhook'), max_length=2048, help_text=_('URL of webhook'))
+    project = models.ForeignKey(
+        'projects.Project',
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='webhooks',
+        default=None,
+    )
+
+    url = models.URLField(
+        _('URL of webhook'), max_length=2048, help_text=_('URL of webhook')
+    )
 
     send_payload = models.BooleanField(
-        _("does webhook send the payload"), default=True, help_text=('If value is False send only action'),
+        _("does webhook send the payload"),
+        default=True,
+        help_text=('If value is False send only action'),
     )
 
     send_for_all_actions = models.BooleanField(
@@ -64,16 +75,26 @@ class Webhook(models.Model):
         help_text=('If value is False the webhook is disabled'),
     )
 
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True, help_text=_('Creation time'), db_index=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True, help_text=_('Last update time'), db_index=True)
+    created_at = models.DateTimeField(
+        _('created at'), auto_now_add=True, help_text=_('Creation time'), db_index=True
+    )
+    updated_at = models.DateTimeField(
+        _('updated at'), auto_now=True, help_text=_('Last update time'), db_index=True
+    )
 
     def get_actions(self):
-        return WebhookAction.objects.filter(webhook=self).values_list('action', flat=True)
+        return WebhookAction.objects.filter(webhook=self).values_list(
+            'action', flat=True
+        )
 
     def validate_actions(self, actions):
         actions_meta = [WebhookAction.ACTIONS[action] for action in actions]
-        if self.project and any((meta.get('organization-only') for meta in actions_meta)):
-            raise ValidationError("Project webhook can't contain organization-only action.")
+        if self.project and any(
+            (meta.get('organization-only') for meta in actions_meta)
+        ):
+            raise ValidationError(
+                "Project webhook can't contain organization-only action."
+            )
         return actions
 
     def set_actions(self, actions):
@@ -85,7 +106,9 @@ class Webhook(models.Model):
         for new_action in list(actions - old_actions):
             WebhookAction.objects.create(webhook=self, action=new_action)
 
-        WebhookAction.objects.filter(webhook=self, action__in=(old_actions - actions)).delete()
+        WebhookAction.objects.filter(
+            webhook=self, action__in=(old_actions - actions)
+        ).delete()
 
     def has_permission(self, user):
         user.project = self.project  # link for activity log
@@ -111,7 +134,6 @@ class WebhookAction(models.Model):
     LABEL_LINK_CREATED = 'LABEL_LINK_CREATED'
     LABEL_LINK_UPDATED = 'LABEL_LINK_UPDATED'
     LABEL_LINK_DELETED = 'LABEL_LINK_DELETED'
-
 
     ACTIONS = {
         PROJECT_CREATED: {
@@ -239,7 +261,7 @@ class WebhookAction(models.Model):
                     'field': 'label',
                     'serializer': load_func(settings.WEBHOOK_SERIALIZERS['label']),
                 },
-            }
+            },
         },
         LABEL_LINK_DELETED: {
             'name': _('Label link deleted'),
@@ -250,10 +272,11 @@ class WebhookAction(models.Model):
             'serializer': OnlyIDWebhookSerializer,
             'project-field': 'project',
         },
-
     }
 
-    webhook = models.ForeignKey(Webhook, on_delete=models.CASCADE, related_name='actions')
+    webhook = models.ForeignKey(
+        Webhook, on_delete=models.CASCADE, related_name='actions'
+    )
 
     action = models.CharField(
         _('action of webhook'),

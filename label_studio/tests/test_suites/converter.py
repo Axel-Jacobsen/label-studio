@@ -18,13 +18,17 @@ def represent_ordereddict(dumper, data):
 
 yaml.add_representer(OrderedDict, represent_ordereddict)
 
+
 class Regexp(yaml.YAMLObject):
     yaml_tag = u'!re_match'
+
     def __init__(self, regexp):
         self.regexp = regexp
+
     # def __repr__(self):
     #     return "" % (
     #         self.__class__.__name__, self.name, self.hp, self.ac, self.attacks)
+
 
 old_test = sys.argv[1]
 
@@ -43,7 +47,10 @@ with open(old_test) as f:
             new_stages = [{'type': 'ref', 'id': 'signup'}]
             for stage in test_data:
                 for url, stage_data in stage.items():
-                    request_data = {'url': '{{django_live_url}}{url}'.format(url=url), 'method': stage_data['method']}
+                    request_data = {
+                        'url': '{{django_live_url}}{url}'.format(url=url),
+                        'method': stage_data['method'],
+                    }
 
                     content_type = stage_data.get('content_type', None)
                     if 'data' in stage_data:
@@ -69,10 +76,14 @@ with open(old_test) as f:
                                 request_data['data'] = stage_data['data']
 
                     if 'content_type' in stage_data:
-                        request_data['headers'] = {'content-type': stage_data['content_type']}
+                        request_data['headers'] = {
+                            'content-type': stage_data['content_type']
+                        }
 
                     response_data = {'status_code': stage_data['status_code']}
-                    if 'response' in stage_data and isinstance(stage_data['response'], dict):
+                    if 'response' in stage_data and isinstance(
+                        stage_data['response'], dict
+                    ):
                         for k, v in stage_data['response'].items():
                             if isinstance(v, str) and v.startswith('{'):
                                 if not 'save' in response_data:

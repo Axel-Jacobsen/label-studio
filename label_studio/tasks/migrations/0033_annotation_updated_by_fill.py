@@ -15,15 +15,17 @@ import logging
 def _fill_annotations_updated_by():
     projects = Project.objects.all()
     for project in projects.iterator():
-        migration = AsyncMigrationStatus.objects.filter(project=project, name='0033_annotation_updated_by_fill').first()
+        migration = AsyncMigrationStatus.objects.filter(
+            project=project, name='0033_annotation_updated_by_fill'
+        ).first()
         if migration and migration.status == AsyncMigrationStatus.STATUS_FINISHED:
             # Migration for this project already done
             continue
 
         migration = AsyncMigrationStatus.objects.create(
-                project=project,
-                name='0033_annotation_updated_by_fill',
-                status=AsyncMigrationStatus.STATUS_STARTED,
+            project=project,
+            name='0033_annotation_updated_by_fill',
+            status=AsyncMigrationStatus.STATUS_STARTED,
         )
 
         Annotation.objects.filter(project=project).update(updated_by=F('completed_by'))
@@ -52,11 +54,6 @@ def backward(apps, _):
 
 
 class Migration(migrations.Migration):
+    dependencies = [('tasks', '0032_annotation_updated_by')]
 
-    dependencies = [
-        ('tasks', '0032_annotation_updated_by')
-    ]
-
-    operations = [
-        migrations.RunPython(forward, backward)
-    ]
+    operations = [migrations.RunPython(forward, backward)]

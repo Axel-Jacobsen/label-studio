@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('tasks', '0028_auto_20220802_2220'),
     ]
@@ -14,6 +13,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='annotation',
             name='project',
-            field=models.ForeignKey(help_text='Project ID for this annotation', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='annotations', to='projects.project'),
+            field=models.ForeignKey(
+                help_text='Project ID for this annotation',
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='annotations',
+                to='projects.project',
+            ),
         ),
     ]

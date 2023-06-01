@@ -24,26 +24,40 @@ from django.http import Http404
 from core.utils.common import temporary_disconnect_all_signals
 from core.mixins import GetParentObjectMixin
 from core.label_config import config_essential_data_has_changed
-from projects.models import (
-    Project, ProjectSummary, ProjectManager, ProjectImport
-)
+from projects.models import Project, ProjectSummary, ProjectManager, ProjectImport
 from projects.serializers import (
-    ProjectSerializer, ProjectLabelConfigSerializer, ProjectSummarySerializer, GetFieldsSerializer, ProjectImportSerializer
+    ProjectSerializer,
+    ProjectLabelConfigSerializer,
+    ProjectSummarySerializer,
+    GetFieldsSerializer,
+    ProjectImportSerializer,
 )
 from projects.functions.next_task import get_next_task
 from tasks.models import Task
-from tasks.serializers import TaskSerializer, TaskSimpleSerializer, TaskWithAnnotationsAndPredictionsAndDraftsSerializer, NextTaskSerializer
-from webhooks.utils import api_webhook, api_webhook_for_delete, emit_webhooks_for_instance
+from tasks.serializers import (
+    TaskSerializer,
+    TaskSimpleSerializer,
+    TaskWithAnnotationsAndPredictionsAndDraftsSerializer,
+    NextTaskSerializer,
+)
+from webhooks.utils import (
+    api_webhook,
+    api_webhook_for_delete,
+    emit_webhooks_for_instance,
+)
 from webhooks.models import WebhookAction
 
 from core.permissions import all_permissions, ViewClassPermission
-from core.utils.common import (paginator, paginator_help)
+from core.utils.common import paginator, paginator_help
 from core.utils.exceptions import ProjectExistException, LabelStudioDatabaseException
 from core.utils.io import find_dir, find_file, read_yaml
 from core.filters import ListFilter
 from projects.functions.stream_history import get_label_stream_history
 
-from data_manager.functions import get_prepared_queryset, filters_ordering_selected_items_exist
+from data_manager.functions import (
+    get_prepared_queryset,
+    filters_ordering_selected_items_exist,
+)
 from data_manager.models import View
 
 logger = logging.getLogger(__name__)
@@ -57,36 +71,31 @@ _result_schema = openapi.Schema(
         'from_name': openapi.Schema(
             title='from_name',
             description='The name of the labeling tag from the project config',
-            type=openapi.TYPE_STRING
+            type=openapi.TYPE_STRING,
         ),
         'to_name': openapi.Schema(
             title='to_name',
             description='The name of the labeling tag from the project config',
-            type=openapi.TYPE_STRING
+            type=openapi.TYPE_STRING,
         ),
         'value': openapi.Schema(
             title='value',
             description='Labeling result value. Format depends on chosen ML backend',
-            type=openapi.TYPE_OBJECT
-        )
+            type=openapi.TYPE_OBJECT,
+        ),
     },
     example={
         'from_name': 'image_class',
         'to_name': 'image',
-        'value': {
-            'labels': ['Cat']
-        }
-    }
+        'value': {'labels': ['Cat']},
+    },
 )
 
 _task_data_schema = openapi.Schema(
     title='Task data',
     description='Task data',
     type=openapi.TYPE_OBJECT,
-    example={
-        'id': 1,
-        'my_image_url': '/static/samples/kittens.jpg'
-    }
+    example={'id': 1, 'my_image_url': '/static/samples/kittens.jpg'},
 )
 
 
@@ -99,10 +108,12 @@ class ProjectFilterSet(FilterSet):
     ids = ListFilter(field_name="id", lookup_expr="in")
 
 
-@method_decorator(name='get', decorator=swagger_auto_schema(
-    tags=['Projects'],
-    operation_summary='List your projects',
-    operation_description="""
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
+        tags=['Projects'],
+        operation_summary='List your projects',
+        operation_description="""
     Return a list of the projects that you've created.
 
     To perform most tasks with the Label Studio API, you must specify the project ID, sometimes referred to as the `pk`.
@@ -111,20 +122,28 @@ class ProjectFilterSet(FilterSet):
     ```bash
     curl -X GET {}/api/projects/ -H 'Authorization: Token abc123'
     ```
-    """.format(settings.HOSTNAME or 'https://localhost:8080')
-))
-@method_decorator(name='post', decorator=swagger_auto_schema(
-    tags=['Projects'],
-    operation_summary='Create new project',
-    operation_description="""
+    """.format(
+            settings.HOSTNAME or 'https://localhost:8080'
+        ),
+    ),
+)
+@method_decorator(
+    name='post',
+    decorator=swagger_auto_schema(
+        tags=['Projects'],
+        operation_summary='Create new project',
+        operation_description="""
     Create a project and set up the labeling interface in Label Studio using the API.
     
     ```bash
     curl -H Content-Type:application/json -H 'Authorization: Token abc123' -X POST '{}/api/projects' \
     --data '{{"label_config": "<View>[...]</View>"}}'
     ```
-    """.format(settings.HOSTNAME or 'https://localhost:8080')
-))
+    """.format(
+            settings.HOSTNAME or 'https://localhost:8080'
+        ),
+    ),
+)
 class ProjectListAPI(generics.ListCreateAPIView):
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     serializer_class = ProjectSerializer
@@ -141,11 +160,14 @@ class ProjectListAPI(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
         filter = serializer.validated_data.get('filter')
-        projects = Project.objects.filter(organization=self.request.user.active_organization).\
-            order_by(F('pinned_at').desc(nulls_last=True), "-created_at")
+        projects = Project.objects.filter(
+            organization=self.request.user.active_organization
+        ).order_by(F('pinned_at').desc(nulls_last=True), "-created_at")
         if filter in ['pinned_only', 'exclude_pinned']:
             projects = projects.filter(pinned_at__isnull=filter == 'exclude_pinned')
-        return ProjectManager.with_counts_annotate(projects, fields=fields).prefetch_related('members', 'created_by')
+        return ProjectManager.with_counts_annotate(
+            projects, fields=fields
+        ).prefetch_related('members', 'created_by')
 
     def get_serializer_context(self):
         context = super(ProjectListAPI, self).get_serializer_context()
@@ -156,10 +178,18 @@ class ProjectListAPI(generics.ListCreateAPIView):
         try:
             project = ser.save(organization=self.request.user.active_organization)
         except IntegrityError as e:
-            if str(e) == 'UNIQUE constraint failed: project.title, project.created_by_id':
-                raise ProjectExistException('Project with the same name already exists: {}'.
-                                            format(ser.validated_data.get('title', '')))
-            raise LabelStudioDatabaseException('Database error during project creation. Try again.')
+            if (
+                str(e)
+                == 'UNIQUE constraint failed: project.title, project.created_by_id'
+            ):
+                raise ProjectExistException(
+                    'Project with the same name already exists: {}'.format(
+                        ser.validated_data.get('title', '')
+                    )
+                )
+            raise LabelStudioDatabaseException(
+                'Database error during project creation. Try again.'
+            )
 
     def get(self, request, *args, **kwargs):
         return super(ProjectListAPI, self).get(request, *args, **kwargs)
@@ -169,24 +199,32 @@ class ProjectListAPI(generics.ListCreateAPIView):
         return super(ProjectListAPI, self).post(request, *args, **kwargs)
 
 
-@method_decorator(name='get', decorator=swagger_auto_schema(
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Get project by ID',
-        operation_description='Retrieve information about a project by project ID.'
-    ))
-@method_decorator(name='delete', decorator=swagger_auto_schema(
+        operation_description='Retrieve information about a project by project ID.',
+    ),
+)
+@method_decorator(
+    name='delete',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Delete project',
-        operation_description='Delete a project by specified project ID.'
-    ))
-@method_decorator(name='patch', decorator=swagger_auto_schema(
+        operation_description='Delete a project by specified project ID.',
+    ),
+)
+@method_decorator(
+    name='patch',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Update project',
         operation_description='Update the project settings for a specific project.',
-        request_body=ProjectSerializer
-    ))
+        request_body=ProjectSerializer,
+    ),
+)
 class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
-
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     queryset = Project.objects.with_counts()
     permission_required = ViewClassPermission(
@@ -205,7 +243,9 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
-        return Project.objects.with_counts(fields=fields).filter(organization=self.request.user.active_organization)
+        return Project.objects.with_counts(fields=fields).filter(
+            organization=self.request.user.active_organization
+        )
 
     def get(self, request, *args, **kwargs):
         return super(ProjectAPI, self).get(request, *args, **kwargs)
@@ -222,7 +262,9 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         # config changes can break view, so we need to reset them
         if label_config:
             try:
-                has_changes = config_essential_data_has_changed(label_config, project.label_config)
+                has_changes = config_essential_data_has_changed(
+                    label_config, project.label_config
+                )
             except KeyError:
                 pass
 
@@ -239,43 +281,54 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         return super(ProjectAPI, self).put(request, *args, **kwargs)
 
 
-@method_decorator(name='get', decorator=swagger_auto_schema(
-    tags=['Projects'],
-    operation_summary='Get next task to label',
-    operation_description="""
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
+        tags=['Projects'],
+        operation_summary='Get next task to label',
+        operation_description="""
     Get the next task for labeling. If you enable Machine Learning in
     your project, the response might include a "predictions"
     field. It contains a machine learning prediction result for
     this task.
     """,
-    responses={200: TaskWithAnnotationsAndPredictionsAndDraftsSerializer()}
-    ))  # leaving this method decorator info in case we put it back in swagger API docs
+        responses={200: TaskWithAnnotationsAndPredictionsAndDraftsSerializer()},
+    ),
+)  # leaving this method decorator info in case we put it back in swagger API docs
 class ProjectNextTaskAPI(generics.RetrieveAPIView):
-
     permission_required = all_permissions.tasks_view
     serializer_class = TaskWithAnnotationsAndPredictionsAndDraftsSerializer  # using it for swagger API docs
     queryset = Project.objects.all()
-    swagger_schema = None # this endpoint doesn't need to be in swagger API docs
+    swagger_schema = None  # this endpoint doesn't need to be in swagger API docs
 
     def get(self, request, *args, **kwargs):
         project = self.get_object()
         dm_queue = filters_ordering_selected_items_exist(request.data)
         prepared_tasks = get_prepared_queryset(request, project)
 
-        next_task, queue_info = get_next_task(request.user, prepared_tasks, project, dm_queue)
+        next_task, queue_info = get_next_task(
+            request.user, prepared_tasks, project, dm_queue
+        )
 
         if next_task is None:
             raise NotFound(
                 f'There are still some tasks to complete for the user={request.user}, '
-                f'but they seem to be locked by another user.')
+                f'but they seem to be locked by another user.'
+            )
 
         # serialize task
-        context = {'request': request, 'project': project, 'resolve_uri': True, 'annotations': False}
+        context = {
+            'request': request,
+            'project': project,
+            'resolve_uri': True,
+            'annotations': False,
+        }
         serializer = NextTaskSerializer(next_task, context=context)
         response = serializer.data
 
         response['queue'] = queue_info
         return Response(response)
+
 
 class LabelStreamHistoryAPI(generics.RetrieveAPIView):
     permission_required = all_permissions.tasks_view
@@ -290,13 +343,16 @@ class LabelStreamHistoryAPI(generics.RetrieveAPIView):
         return Response(history)
 
 
-@method_decorator(name='post', decorator=swagger_auto_schema(
+@method_decorator(
+    name='post',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Validate label config',
         operation_description='Validate an arbitrary labeling configuration.',
         responses={204: 'Validation success'},
         request_body=ProjectLabelConfigSerializer,
-    ))
+    ),
+)
 class LabelConfigValidateAPI(generics.CreateAPIView):
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_classes = (AllowAny,)
@@ -318,7 +374,9 @@ class LabelConfigValidateAPI(generics.CreateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@method_decorator(name='post', decorator=swagger_auto_schema(
+@method_decorator(
+    name='post',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Validate project label config',
         operation_description="""
@@ -329,13 +387,15 @@ class LabelConfigValidateAPI(generics.CreateAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
         ],
         request_body=ProjectLabelConfigSerializer,
-))
+    ),
+)
 class ProjectLabelConfigValidateAPI(generics.RetrieveAPIView):
-    """ Validate label config
-    """
+    """Validate label config"""
+
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     serializer_class = ProjectLabelConfigSerializer
     permission_required = all_permissions.projects_change
@@ -348,9 +408,14 @@ class ProjectLabelConfigValidateAPI(generics.RetrieveAPIView):
             raise RestValidationError('Label config is not set or is empty')
 
         # check new config includes meaningful changes
-        has_changed = config_essential_data_has_changed(label_config, project.label_config)
+        has_changed = config_essential_data_has_changed(
+            label_config, project.label_config
+        )
         project.validate_config(label_config, strict=True)
-        return Response({'config_essential_data_has_changed': has_changed}, status=status.HTTP_200_OK)
+        return Response(
+            {'config_essential_data_has_changed': has_changed},
+            status=status.HTTP_200_OK,
+        )
 
     @swagger_auto_schema(auto_schema=None)
     def get(self, request, *args, **kwargs):
@@ -368,7 +433,9 @@ class ProjectSummaryAPI(generics.RetrieveAPIView):
         return super(ProjectSummaryAPI, self).get(*args, **kwargs)
 
 
-@method_decorator(name='get', decorator=swagger_auto_schema(
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Get project import info',
         operation_description='Return data related to async project import operation',
@@ -377,9 +444,11 @@ class ProjectSummaryAPI(generics.RetrieveAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project import.'),
+                description='A unique integer value identifying this project import.',
+            ),
         ],
-    ))
+    ),
+)
 class ProjectImportAPI(generics.RetrieveAPIView):
     parser_classes = (JSONParser,)
     serializer_class = ProjectImportSerializer
@@ -388,7 +457,9 @@ class ProjectImportAPI(generics.RetrieveAPIView):
     lookup_url_kwarg = 'import_pk'
 
 
-@method_decorator(name='delete', decorator=swagger_auto_schema(
+@method_decorator(
+    name='delete',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='Delete all tasks',
         operation_description='Delete all tasks from a specific project.',
@@ -397,10 +468,14 @@ class ProjectImportAPI(generics.RetrieveAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
         ],
-))
-@method_decorator(name='get', decorator=swagger_auto_schema(
+    ),
+)
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
         tags=['Projects'],
         operation_summary='List project tasks',
         operation_description="""
@@ -408,18 +483,23 @@ class ProjectImportAPI(generics.RetrieveAPIView):
             ```bash
             curl -X GET {}/api/projects/{{id}}/tasks/?page=1&page_size=10 -H 'Authorization: Token abc123'
             ```
-        """.format(settings.HOSTNAME or 'https://localhost:8080'),
+        """.format(
+            settings.HOSTNAME or 'https://localhost:8080'
+        ),
         manual_parameters=[
             openapi.Parameter(
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
-        ] + paginator_help('tasks', 'Projects')['manual_parameters'],
-    ))
-class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView,
-                         generics.DestroyAPIView):
-
+                description='A unique integer value identifying this project.',
+            ),
+        ]
+        + paginator_help('tasks', 'Projects')['manual_parameters'],
+    ),
+)
+class ProjectTaskListAPI(
+    GetParentObjectMixin, generics.ListCreateAPIView, generics.DestroyAPIView
+):
     parser_classes = (JSONParser, FormParser)
     queryset = Task.objects.all()
     parent_queryset = Project.objects.all()
@@ -439,7 +519,9 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView,
             return TaskSerializer
 
     def filter_queryset(self, queryset):
-        project = generics.get_object_or_404(Project.objects.for_user(self.request.user), pk=self.kwargs.get('pk', 0))
+        project = generics.get_object_or_404(
+            Project.objects.for_user(self.request.user), pk=self.kwargs.get('pk', 0)
+        )
         # ordering is deprecated here
         tasks = Task.objects.filter(project=project).order_by('-updated_at')
         page = paginator(tasks, self.request)
@@ -449,11 +531,18 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView,
             raise Http404
 
     def delete(self, request, *args, **kwargs):
-        project = generics.get_object_or_404(Project.objects.for_user(self.request.user), pk=self.kwargs['pk'])
+        project = generics.get_object_or_404(
+            Project.objects.for_user(self.request.user), pk=self.kwargs['pk']
+        )
         task_ids = list(Task.objects.filter(project=project).values('id'))
         Task.delete_tasks_without_signals(Task.objects.filter(project=project))
         project.summary.reset()
-        emit_webhooks_for_instance(request.user.active_organization, None, WebhookAction.TASKS_DELETED, task_ids)
+        emit_webhooks_for_instance(
+            request.user.active_organization,
+            None,
+            WebhookAction.TASKS_DELETED,
+            task_ids,
+        )
         return Response(data={'tasks': task_ids}, status=204)
 
     def get(self, *args, **kwargs):
@@ -471,7 +560,12 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView,
     def perform_create(self, serializer):
         project = self.get_parent_object()
         instance = serializer.save(project=project)
-        emit_webhooks_for_instance(self.request.user.active_organization, project, WebhookAction.TASKS_CREATED, [instance])
+        emit_webhooks_for_instance(
+            self.request.user.active_organization,
+            project,
+            WebhookAction.TASKS_CREATED,
+            [instance],
+        )
         return instance
 
 
@@ -492,7 +586,9 @@ class TemplateListAPI(generics.ListAPIView):
                 # if hostname set manually, create full image urls
                 config['image'] = settings.HOSTNAME + config['image']
             configs.append(config)
-        template_groups_file = find_file(os.path.join('annotation_templates', 'groups.txt'))
+        template_groups_file = find_file(
+            os.path.join('annotation_templates', 'groups.txt')
+        )
         with open(template_groups_file, encoding='utf-8') as f:
             groups = f.read().splitlines()
         logger.debug(f'{len(configs)} templates found.')
@@ -512,7 +608,9 @@ class ProjectSampleTask(generics.RetrieveAPIView):
             raise RestValidationError('Label config is not set or is empty')
 
         project = self.get_object()
-        return Response({'sample_task': project.get_sample_task(label_config)}, status=200)
+        return Response(
+            {'sample_task': project.get_sample_task(label_config)}, status=200
+        )
 
 
 class ProjectModelVersions(generics.RetrieveAPIView):

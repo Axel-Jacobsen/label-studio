@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class JSONStorage(BaseStorage):
-
     description = 'JSON task file'
 
     def __init__(self, **kwargs):
@@ -80,12 +79,14 @@ class JSONStorage(BaseStorage):
 
 
 def already_exists_error(what, path):
-    raise RuntimeError('{path} {what} already exists. Use "--force" option to recreate it.'.format(
-        path=path, what=what))
+    raise RuntimeError(
+        '{path} {what} already exists. Use "--force" option to recreate it.'.format(
+            path=path, what=what
+        )
+    )
 
 
 class DirJSONsStorage(BaseStorage):
-
     description = 'Directory with JSON task files'
 
     def __init__(self, **kwargs):
@@ -159,22 +160,29 @@ class DirJSONsStorage(BaseStorage):
 
 
 class TasksJSONStorage(JSONStorage):
-
     form = BaseForm
     description = 'Local [loading tasks from "tasks.json" file]'
 
     def __init__(self, path, project_path, **kwargs):
         super(TasksJSONStorage, self).__init__(
-            project_path=project_path,
-            path=os.path.join(project_path, 'tasks.json'))
+            project_path=project_path, path=os.path.join(project_path, 'tasks.json')
+        )
 
 
 class ExternalTasksJSONStorage(CloudStorage):
-
     form = BaseForm
     description = 'Local [loading tasks from "tasks.json" file]'
 
-    def __init__(self, name, path, project_path, prefix=None, create_local_copy=False, regex='.*', **kwargs):
+    def __init__(
+        self,
+        name,
+        path,
+        project_path,
+        prefix=None,
+        create_local_copy=False,
+        regex='.*',
+        **kwargs
+    ):
         super(ExternalTasksJSONStorage, self).__init__(
             name=name,
             project_path=project_path,
@@ -238,7 +246,10 @@ class ExternalTasksJSONStorage(CloudStorage):
     def _remove_id_from_keys_map(self, id):
         full_key = self.key_prefix + str(id)
         assert id in self._ids_keys_map, 'No such task id: ' + str(id)
-        assert self._ids_keys_map[id]['key'] == full_key, (self._ids_keys_map[id]['key'], full_key)
+        assert self._ids_keys_map[id]['key'] == full_key, (
+            self._ids_keys_map[id]['key'],
+            full_key,
+        )
         self._selected_ids.remove(id)
         self._ids_keys_map.pop(id)
         self._keys_ids_map.pop(full_key)
@@ -275,7 +286,6 @@ class ExternalTasksJSONStorage(CloudStorage):
 
 
 class AnnotationsDirStorage(DirJSONsStorage):
-
     form = BaseForm
     description = 'Local [annotations are in "annotations" directory]'
 
@@ -283,4 +293,5 @@ class AnnotationsDirStorage(DirJSONsStorage):
         super(AnnotationsDirStorage, self).__init__(
             name=name,
             project_path=project_path,
-            path=os.path.join(project_path, 'annotations'))
+            path=os.path.join(project_path, 'annotations'),
+        )

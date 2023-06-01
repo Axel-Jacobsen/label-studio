@@ -5,7 +5,6 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('tasks', '0035_tasklock_unique_id'),
     ]
@@ -14,11 +13,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='annotation',
             name='unique_id',
-            field=models.UUIDField(blank=True, default=uuid.uuid4, editable=False, null=True, unique=True),
+            field=models.UUIDField(
+                blank=True, default=uuid.uuid4, editable=False, null=True, unique=True
+            ),
         ),
         migrations.AlterField(
             model_name='tasklock',
             name='unique_id',
-            field=models.UUIDField(blank=True, default=uuid.uuid4, editable=False, null=True, unique=True),
+            field=models.UUIDField(
+                blank=True, default=uuid.uuid4, editable=False, null=True, unique=True
+            ),
         ),
     ]

@@ -30,10 +30,14 @@ def redis_healthcheck():
     try:
         _redis.ping()
     except redis.exceptions.ConnectionError as exc:
-        logger.error(f'Redis healthcheck failed with ConnectionError: {exc}', exc_info=True)
+        logger.error(
+            f'Redis healthcheck failed with ConnectionError: {exc}', exc_info=True
+        )
         return False
     except redis.exceptions.TimeoutError as exc:
-        logger.error(f'Redis healthcheck failed with TimeoutError: {exc}', exc_info=True)
+        logger.error(
+            f'Redis healthcheck failed with TimeoutError: {exc}', exc_info=True
+        )
         return False
     except redis.exceptions.RedisError as exc:
         logger.error(f'Redis healthcheck failed: {exc}', exc_info=True)
@@ -103,12 +107,7 @@ def start_job_async_or_sync(job, *args, in_seconds=0, **kwargs):
         enqueue_method = queue.enqueue
         if in_seconds > 0:
             enqueue_method = partial(queue.enqueue_in, timedelta(seconds=in_seconds))
-        job = enqueue_method(
-            job,
-            *args,
-            **kwargs,
-            job_timeout=job_timeout
-        )
+        job = enqueue_method(job, *args, **kwargs, job_timeout=job_timeout)
         return job
     else:
         on_failure = kwargs.pop('on_failure', None)
@@ -182,10 +181,6 @@ def get_jobs_by_meta(queue, func_name, meta):
     :return: Job list
     """
     # get all jobs from Queue
-    jobs = (job
-            for job in queue.get_jobs()
-            if job.func.__name__ == func_name
-            )
+    jobs = (job for job in queue.get_jobs() if job.func.__name__ == func_name)
     # return only with same meta data
     return [job for job in jobs if hasattr(job, 'meta') and job.meta == meta]
-

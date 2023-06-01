@@ -14,31 +14,63 @@ from core.models import AsyncMigrationStatus
 
 
 class UserAdminShort(UserAdmin):
-
-    add_fieldsets = (
-        (None, {'fields': ('email', 'password1', 'password2')}),
-    )
+    add_fieldsets = ((None, {'fields': ('email', 'password1', 'password2')}),)
 
     def __init__(self, *args, **kwargs):
         super(UserAdminShort, self).__init__(*args, **kwargs)
 
-        self.list_display = ('email', 'username', 'active_organization', 'organization', 'is_staff', 'is_superuser')
+        self.list_display = (
+            'email',
+            'username',
+            'active_organization',
+            'organization',
+            'is_staff',
+            'is_superuser',
+        )
         self.list_filter = ('is_staff', 'is_superuser', 'is_active')
-        self.search_fields = ('username', 'first_name', 'last_name', 'email',
-                              'organization__title', 'active_organization__title')
+        self.search_fields = (
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'organization__title',
+            'active_organization__title',
+        )
         self.ordering = ('email',)
 
-        self.fieldsets = ((None, {'fields': ('password', )}),
-                          ('Personal info', {'fields': ('email', 'username', 'first_name', 'last_name')}),
-                          ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',)}),
-                          ('Important dates', {'fields': ('last_login', 'date_joined')}))
+        self.fieldsets = (
+            (None, {'fields': ('password',)}),
+            (
+                'Personal info',
+                {'fields': ('email', 'username', 'first_name', 'last_name')},
+            ),
+            (
+                'Permissions',
+                {
+                    'fields': (
+                        'is_active',
+                        'is_staff',
+                        'is_superuser',
+                    )
+                },
+            ),
+            ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        )
 
 
 class AsyncMigrationStatusAdmin(admin.ModelAdmin):
     def __init__(self, *args, **kwargs):
         super(AsyncMigrationStatusAdmin, self).__init__(*args, **kwargs)
 
-        self.list_display = ('id', 'name', 'project', 'status', 'created_at', 'updated_at', 'meta')
+        self.list_display = (
+            'id',
+            'name',
+            'project',
+            'status',
+            'created_at',
+            'updated_at',
+            'meta',
+        )
         self.list_filter = ('name', 'status')
         self.search_fields = ('name', 'project__id')
         self.ordering = ('id',)

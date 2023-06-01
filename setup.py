@@ -43,7 +43,5 @@ setuptools.setup(
             'label-studio=label_studio.server:main',
         ],
     },
-    extras_require={
-        'mysql': ['mysqlclient']
-    }
+    extras_require={'mysql': ['mysqlclient']},
 )

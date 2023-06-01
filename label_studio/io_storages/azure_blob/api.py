@@ -4,7 +4,10 @@ from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from io_storages.azure_blob.models import AzureBlobImportStorage, AzureBlobExportStorage
-from io_storages.azure_blob.serializers import AzureBlobImportStorageSerializer, AzureBlobExportStorageSerializer
+from io_storages.azure_blob.serializers import (
+    AzureBlobImportStorageSerializer,
+    AzureBlobExportStorageSerializer,
+)
 from io_storages.api import (
     ImportStorageListAPI,
     ImportStorageDetailAPI,

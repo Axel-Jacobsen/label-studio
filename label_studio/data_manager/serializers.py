@@ -9,7 +9,12 @@ from django.db import transaction
 
 from data_manager.models import View, Filter, FilterGroup
 from tasks.models import Task
-from tasks.serializers import TaskSerializer, AnnotationSerializer, PredictionSerializer, AnnotationDraftSerializer
+from tasks.serializers import (
+    TaskSerializer,
+    AnnotationSerializer,
+    PredictionSerializer,
+    AnnotationDraftSerializer,
+)
 from projects.models import Project
 from label_studio.core.utils.common import round_floats
 
@@ -122,7 +127,9 @@ class ViewSerializer(serializers.ModelSerializer):
                 filters_data = filter_group_data.pop("filters", [])
                 filter_group = FilterGroup.objects.create(**filter_group_data)
 
-                self._create_filters(filter_group=filter_group, filters_data=filters_data)
+                self._create_filters(
+                    filter_group=filter_group, filters_data=filters_data
+                )
 
                 validated_data["filter_group_id"] = filter_group.id
             view = self.Meta.model.objects.create(**validated_data)
@@ -145,7 +152,9 @@ class ViewSerializer(serializers.ModelSerializer):
                     filter_group.save()
 
                 filter_group.filters.clear()
-                self._create_filters(filter_group=filter_group, filters_data=filters_data)
+                self._create_filters(
+                    filter_group=filter_group, filters_data=filters_data
+                )
 
             ordering = validated_data.pop("ordering", None)
             if ordering and ordering != instance.ordering:
@@ -161,7 +170,9 @@ class ViewSerializer(serializers.ModelSerializer):
 
 class DataManagerTaskSerializer(TaskSerializer):
     predictions = serializers.SerializerMethodField(required=False, read_only=True)
-    annotations = AnnotationSerializer(required=False, many=True, default=[], read_only=True)
+    annotations = AnnotationSerializer(
+        required=False, many=True, default=[], read_only=True
+    )
     drafts = serializers.SerializerMethodField(required=False, read_only=True)
     annotators = serializers.SerializerMethodField(required=False, read_only=True)
 
@@ -189,8 +200,7 @@ class DataManagerTaskSerializer(TaskSerializer):
         expandable_fields = {'annotations': (AnnotationSerializer, {'many': True})}
 
     def to_representation(self, obj):
-        """ Dynamically manage including of some fields in the API result
-        """
+        """Dynamically manage including of some fields in the API result"""
         ret = super(DataManagerTaskSerializer, self).to_representation(obj)
         if not self.context.get('annotations'):
             ret.pop('annotations', None)
@@ -218,7 +228,12 @@ class DataManagerTaskSerializer(TaskSerializer):
             result = round_floats(result)
             output = json.dumps(result, ensure_ascii=False)[1:-1]  # remove brackets [ ]
 
-        return output[:self.CHAR_LIMITS].replace(',"', ', "').replace('],[', "] [").replace('"', '')
+        return (
+            output[: self.CHAR_LIMITS]
+            .replace(',"', ', "')
+            .replace('],[', "] [")
+            .replace('"', '')
+        )
 
     def get_annotations_results(self, task):
         return self._pretty_results(task, 'annotations_results')
@@ -227,7 +242,9 @@ class DataManagerTaskSerializer(TaskSerializer):
         return self._pretty_results(task, 'predictions_results')
 
     def get_predictions(self, task):
-        return PredictionSerializer(task.predictions, many=True, default=[], read_only=True).data
+        return PredictionSerializer(
+            task.predictions, many=True, default=[], read_only=True
+        ).data
 
     @staticmethod
     def get_file_upload(task):
@@ -269,8 +286,7 @@ class DataManagerTaskSerializer(TaskSerializer):
         return AnnotationDraftSerializer
 
     def get_drafts_queryset(self, user, drafts):
-        """ Get all user's draft
-        """
+        """Get all user's draft"""
         return drafts.filter(user=user)
 
     def get_drafts(self, task):
@@ -285,7 +301,9 @@ class DataManagerTaskSerializer(TaskSerializer):
             drafts = self.get_drafts_queryset(user, drafts)
 
         serializer_class = self.get_drafts_serializer()
-        return serializer_class(drafts, many=True, read_only=True, default=True, context=self.context).data
+        return serializer_class(
+            drafts, many=True, read_only=True, default=True, context=self.context
+        ).data
 
 
 class SelectedItemsSerializer(serializers.Serializer):
@@ -304,7 +322,9 @@ class SelectedItemsSerializer(serializers.Serializer):
         if view and request and request.method in ("PATCH", "DELETE"):
             all_value = view.selected_items.get("all")
             if all_value and all_value != data["all"]:
-                raise serializers.ValidationError("changing all value possible only with POST method")
+                raise serializers.ValidationError(
+                    "changing all value possible only with POST method"
+                )
 
         return data
 

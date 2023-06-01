@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projects', '0005_merge_20210308_1141'),
     ]
@@ -13,21 +12,37 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='project',
             name='enable_empty_annotation',
-            field=models.BooleanField(default=True, help_text='Allow annotators to submit empty annotations', verbose_name='enable empty annotation'),
+            field=models.BooleanField(
+                default=True,
+                help_text='Allow annotators to submit empty annotations',
+                verbose_name='enable empty annotation',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='maximum_annotations',
-            field=models.IntegerField(default=1, help_text='Maximum number of annotations for one task. If the number of annotations per task is equal or greater to this value, the task is completed (is_labeled=True)', verbose_name='maximum annotation number'),
+            field=models.IntegerField(
+                default=1,
+                help_text='Maximum number of annotations for one task. If the number of annotations per task is equal or greater to this value, the task is completed (is_labeled=True)',
+                verbose_name='maximum annotation number',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='min_annotations_to_start_training',
-            field=models.IntegerField(default=10, help_text='Minimum number of completed tasks after which model training is started', verbose_name='min_annotations_to_start_training'),
+            field=models.IntegerField(
+                default=10,
+                help_text='Minimum number of completed tasks after which model training is started',
+                verbose_name='min_annotations_to_start_training',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='show_annotation_history',
-            field=models.BooleanField(default=False, help_text='Show annotation history to annotator', verbose_name='show annotation history'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Show annotation history to annotator',
+                verbose_name='show annotation history',
+            ),
         ),
     ]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('ml', '0001_initial'),
     ]
@@ -13,21 +12,40 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mlbackend',
             name='description',
-            field=models.TextField(blank=True, default='', help_text='Description for the Machine Learning backend', null=True, verbose_name='description'),
+            field=models.TextField(
+                blank=True,
+                default='',
+                help_text='Description for the Machine Learning backend',
+                null=True,
+                verbose_name='description',
+            ),
         ),
         migrations.AlterField(
             model_name='mlbackend',
             name='title',
-            field=models.TextField(blank=True, default='default', help_text='Name of the Machine Learning backend', null=True, verbose_name='title'),
+            field=models.TextField(
+                blank=True,
+                default='default',
+                help_text='Name of the Machine Learning backend',
+                null=True,
+                verbose_name='title',
+            ),
         ),
         migrations.AlterField(
             model_name='mlbackend',
             name='url',
-            field=models.TextField(help_text='URL for the ML model server', verbose_name='url'),
+            field=models.TextField(
+                help_text='URL for the ML model server', verbose_name='url'
+            ),
         ),
         migrations.AlterField(
             model_name='mlbackendtrainjob',
             name='model_version',
-            field=models.TextField(blank=True, help_text='Model version this job is associated with', null=True, verbose_name='model version'),
+            field=models.TextField(
+                blank=True,
+                help_text='Model version this job is associated with',
+                null=True,
+                verbose_name='model version',
+            ),
         ),
     ]

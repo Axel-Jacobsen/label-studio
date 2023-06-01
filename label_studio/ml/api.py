@@ -39,12 +39,10 @@ logger = logging.getLogger(__name__)
             type=openapi.TYPE_OBJECT,
             properties={
                 'project': openapi.Schema(
-                    type=openapi.TYPE_INTEGER,
-                    description='Project ID'
+                    type=openapi.TYPE_INTEGER, description='Project ID'
                 ),
                 'url': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description='ML backend URL'
+                    type=openapi.TYPE_STRING, description='ML backend URL'
                 ),
             },
         ),
@@ -68,9 +66,11 @@ logger = logging.getLogger(__name__)
                 name='project',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_QUERY,
-                description='Project ID'),
+                description='Project ID',
+            ),
         ],
-    ))
+    ),
+)
 class MLBackendListAPI(generics.ListCreateAPIView):
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = ViewClassPermission(
@@ -173,18 +173,22 @@ class MLBackendDetailAPI(generics.RetrieveUpdateDestroyAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this ML backend.'),
+                description='A unique integer value identifying this ML backend.',
+            ),
         ],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
                 'use_ground_truth': openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description='Whether to include ground truth annotations in training'
+                    type=openapi.TYPE_BOOLEAN,
+                    description='Whether to include ground truth annotations in training',
                 )
             },
         ),
         responses={
-            200: openapi.Response(title='Training OK', description='Training has successfully started.'),
+            200: openapi.Response(
+                title='Training OK', description='Training has successfully started.'
+            ),
             500: openapi.Response(
                 description='Training error',
                 schema=openapi.Schema(
@@ -198,7 +202,6 @@ class MLBackendDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     ),
 )
 class MLBackendTrainAPI(APIView):
-
     permission_required = all_permissions.projects_change
 
     def post(self, request, *args, **kwargs):
@@ -224,16 +227,19 @@ class MLBackendTrainAPI(APIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this ML backend.'),
+                description='A unique integer value identifying this ML backend.',
+            ),
         ],
         request_body=MLInteractiveAnnotatingRequest,
         responses={
-            200: openapi.Response(title='Annotating OK', description='Interactive annotation has succeeded.'),
+            200: openapi.Response(
+                title='Annotating OK',
+                description='Interactive annotation has succeeded.',
+            ),
         },
     ),
 )
 class MLBackendInteractiveAnnotating(APIView):
-
     permission_required = all_permissions.tasks_view
 
     def post(self, request, *args, **kwargs):
@@ -243,7 +249,9 @@ class MLBackendInteractiveAnnotating(APIView):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        task = generics.get_object_or_404(Task, pk=validated_data['task'], project=ml_backend.project)
+        task = generics.get_object_or_404(
+            Task, pk=validated_data['task'], project=ml_backend.project
+        )
         context = validated_data.get('context')
 
         if flag_set('ff_back_dev_2362_project_credentials_060722_short', request.user):
@@ -268,7 +276,6 @@ class MLBackendInteractiveAnnotating(APIView):
     ),
 )
 class MLBackendVersionsAPI(generics.RetrieveAPIView):
-
     permission_required = all_permissions.projects_change
 
     def get(self, request, *args, **kwargs):
@@ -279,9 +286,16 @@ class MLBackendVersionsAPI(generics.RetrieveAPIView):
             result = {'versions': versions_response.response.get("versions", [])}
             return Response(data=result, status=200)
         elif versions_response.status_code == 404:
-            result = {'versions': [ml_backend.model_version], 'message': 'Upgrade your ML backend version to latest.'}
+            result = {
+                'versions': [ml_backend.model_version],
+                'message': 'Upgrade your ML backend version to latest.',
+            }
             return Response(data=result, status=200)
         else:
             result = {'error': str(versions_response.error_message)}
-            status_code = versions_response.status_code if versions_response.status_code > 0 else 500
+            status_code = (
+                versions_response.status_code
+                if versions_response.status_code > 0
+                else 500
+            )
             return Response(data=result, status=status_code)

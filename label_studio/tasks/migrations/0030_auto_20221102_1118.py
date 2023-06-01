@@ -13,7 +13,6 @@ def backwards(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('tasks', '0029_annotation_project'),
     ]

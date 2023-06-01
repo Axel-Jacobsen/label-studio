@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('data_export', '0002_auto_20210921_0954'),
     ]
@@ -13,7 +12,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='export',
             name='title',
-            field=models.CharField(blank=True, default='', max_length=50, verbose_name='title'),
+            field=models.CharField(
+                blank=True, default='', max_length=50, verbose_name='title'
+            ),
         ),
         migrations.AlterField(
             model_name='export',

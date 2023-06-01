@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('ml', '0003_auto_20210309_1239'),
     ]
@@ -13,16 +12,30 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='mlbackend',
             name='is_interactive',
-            field=models.BooleanField(default=False, help_text="It's used for interactive annotating. If true, model has to return one-length list with results", verbose_name='is_interactive'),
+            field=models.BooleanField(
+                default=False,
+                help_text="It's used for interactive annotating. If true, model has to return one-length list with results",
+                verbose_name='is_interactive',
+            ),
         ),
         migrations.AddField(
             model_name='mlbackend',
             name='timeout',
-            field=models.FloatField(blank=True, default=100.0, help_text='Responce model timeout', verbose_name='timeout'),
+            field=models.FloatField(
+                blank=True,
+                default=100.0,
+                help_text='Responce model timeout',
+                verbose_name='timeout',
+            ),
         ),
         migrations.AlterField(
             model_name='mlbackend',
             name='error_message',
-            field=models.TextField(blank=True, help_text='Error message in error state', null=True, verbose_name='error_message'),
+            field=models.TextField(
+                blank=True,
+                help_text='Error message in error state',
+                null=True,
+                verbose_name='error_message',
+            ),
         ),
     ]

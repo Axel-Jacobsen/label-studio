@@ -21,9 +21,9 @@ if __name__ == '__main__':
     count = 0
     while start < len(j):
         filename = OUTPUT + str(count) + '.json'
-        print(filename, '<=', INPUT, '[', start, ':', start+chunk_size, ']')
+        print(filename, '<=', INPUT, '[', start, ':', start + chunk_size, ']')
         with open(filename, 'w') as out:
-            json.dump(j[start:start+chunk_size], out)
+            json.dump(j[start : start + chunk_size], out)
 
         start += chunk_size
         count += 1

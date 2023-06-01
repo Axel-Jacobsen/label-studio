@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def next_task(project, queryset, **kwargs):
-    """ Generate next task for labeling stream
+    """Generate next task for labeling stream
 
     :param project: project
     :param queryset: task ids to sample from
@@ -27,10 +27,16 @@ def next_task(project, queryset, **kwargs):
     if next_task is None:
         raise NotFound(
             f'There are still some tasks to complete for the user={request.user}, '
-            f'but they seem to be locked by another user.')
+            f'but they seem to be locked by another user.'
+        )
 
     # serialize task
-    context = {'request': request, 'project': project, 'resolve_uri': True, 'annotations': False}
+    context = {
+        'request': request,
+        'project': project,
+        'resolve_uri': True,
+        'annotations': False,
+    }
     serializer = NextTaskSerializer(next_task, context=context)
     response = serializer.data
     response['queue'] = queue_info
@@ -43,6 +49,6 @@ actions = [
         'permission': all_permissions.projects_view,
         'title': 'Generate Next Task',
         'order': 0,
-        'hidden': True
+        'hidden': True,
     }
 ]

@@ -26,7 +26,7 @@ from types import SimpleNamespace
 
 from label_studio.core.utils.params import get_bool_env, get_env
 
-# if we haven't this package, pytest.ini::env doesn't work 
+# if we haven't this package, pytest.ini::env doesn't work
 try:
     import pytest_env.plugin
 except ImportError:
@@ -34,8 +34,15 @@ except ImportError:
     exit(-100)
 
 from .utils import (
-    create_business, signin, gcs_client_mock, ml_backend_mock, register_ml_backend_mock, azure_client_mock,
-    redis_client_mock, make_project, import_from_url_mock
+    create_business,
+    signin,
+    gcs_client_mock,
+    ml_backend_mock,
+    register_ml_backend_mock,
+    azure_client_mock,
+    redis_client_mock,
+    make_project,
+    import_from_url_mock,
 )
 
 boto3.set_stream_logger('botocore.credentials', logging.DEBUG)
@@ -66,7 +73,9 @@ def debug_modal_exceptions_false(settings):
 def enable_sentry():
     settings.SENTRY_RATE = 0
     # it's disabled key, but this is correct
-    settings.SENTRY_DSN = 'https://44f7a50de5ab425ca6bc406ef69b2122@o227124.ingest.sentry.io/5820521'
+    settings.SENTRY_DSN = (
+        'https://44f7a50de5ab425ca6bc406ef69b2122@o227124.ingest.sentry.io/5820521'
+    )
 
 
 @pytest.fixture(scope='function')
@@ -126,7 +135,11 @@ def s3_remove_bucket():
 def s3_with_jsons(s3):
     bucket_name = 'pytest-s3-jsons'
     s3.create_bucket(Bucket=bucket_name)
-    s3.put_object(Bucket=bucket_name, Key='test.json', Body=json.dumps({'image_url': 'http://ggg.com/image.jpg'}))
+    s3.put_object(
+        Bucket=bucket_name,
+        Key='test.json',
+        Body=json.dumps({'image_url': 'http://ggg.com/image.jpg'}),
+    )
     yield s3
 
 
@@ -134,9 +147,15 @@ def s3_with_jsons(s3):
 def s3_with_hypertext_s3_links(s3):
     bucket_name = 'pytest-s3-jsons-hypertext'
     s3.create_bucket(Bucket=bucket_name)
-    s3.put_object(Bucket=bucket_name, Key='test.json', Body=json.dumps({
-        'text': "<a href=\"s3://hypertext-bucket/file with /spaces and' / ' / quotes.jpg\"/>"
-    }))
+    s3.put_object(
+        Bucket=bucket_name,
+        Key='test.json',
+        Body=json.dumps(
+            {
+                'text': "<a href=\"s3://hypertext-bucket/file with /spaces and' / ' / quotes.jpg\"/>"
+            }
+        ),
+    )
     yield s3
 
 
@@ -170,13 +189,11 @@ def s3_export_bucket_sse(s3):
                 "Action": "s3:PutObject",
                 "Resource": [
                     f"arn:aws:s3:::{bucket_name}",
-                    f"arn:aws:s3:::{bucket_name}/*"
+                    f"arn:aws:s3:::{bucket_name}/*",
                 ],
                 "Condition": {
-                    "StringNotEquals": {
-                        "s3:x-amz-server-side-encryption": "AES256"
-                    }
-                }
+                    "StringNotEquals": {"s3:x-amz-server-side-encryption": "AES256"}
+                },
             },
             {
                 "Effect": "Deny",
@@ -184,13 +201,9 @@ def s3_export_bucket_sse(s3):
                 "Action": "s3:PutObject",
                 "Resource": [
                     f"arn:aws:s3:::{bucket_name}",
-                    f"arn:aws:s3:::{bucket_name}/*"
+                    f"arn:aws:s3:::{bucket_name}/*",
                 ],
-                "Condition": {
-                    "Null": {
-                        "s3:x-amz-server-side-encryption": "true"
-                    }
-                }
+                "Condition": {"Null": {"s3:x-amz-server-side-encryption": "true"}},
             },
             {
                 "Effect": "Deny",
@@ -198,15 +211,11 @@ def s3_export_bucket_sse(s3):
                 "Action": "s3:*",
                 "Resource": [
                     f"arn:aws:s3:::{bucket_name}",
-                    f"arn:aws:s3:::{bucket_name}/*"
+                    f"arn:aws:s3:::{bucket_name}/*",
                 ],
-                "Condition": {
-                    "Bool": {
-                        "aws:SecureTransport": "false"
-                    }
-                }
-            }
-        ]
+                "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+            },
+        ],
     }
 
     s3.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
@@ -246,9 +255,19 @@ def import_from_url():
 
 @pytest.fixture(autouse=True)
 def ml_backend_1(ml_backend):
-    register_ml_backend_mock(ml_backend, url='https://test.heartex.mlbackend.com:9090', setup_model_version='Fri Feb 19 17:10:44 2021')
-    register_ml_backend_mock(ml_backend, url='https://test.heartex.mlbackend.com:9091', health_connect_timeout=True)
-    register_ml_backend_mock(ml_backend, url='http://localhost:8999', predictions={'results': []})
+    register_ml_backend_mock(
+        ml_backend,
+        url='https://test.heartex.mlbackend.com:9090',
+        setup_model_version='Fri Feb 19 17:10:44 2021',
+    )
+    register_ml_backend_mock(
+        ml_backend,
+        url='https://test.heartex.mlbackend.com:9091',
+        health_connect_timeout=True,
+    )
+    register_ml_backend_mock(
+        ml_backend, url='http://localhost:8999', predictions={'results': []}
+    )
     yield ml_backend
 
 
@@ -258,8 +277,8 @@ def pytest_configure():
 
 
 class URLS:
-    """ This class keeps urls with api
-    """
+    """This class keeps urls with api"""
+
     def __init__(self):
         self.project_create = '/api/projects/'
         self.task_bulk = None
@@ -279,10 +298,10 @@ def project_ranker():
 
 
 def project_dialog():
-    """ Simple project with dialog configs
+    """Simple project with dialog configs
 
     :return: config of project with task
-    """    
+    """
     label = '''<View>
       <TextEditor>
         <Text name="dialog" value="$dialog"></Text>
@@ -318,7 +337,7 @@ def project_choices():
 
 
 def setup_project(client, project_template, do_auth=True):
-    """ Create new test@gmail.com user, login via client, create test project.
+    """Create new test@gmail.com user, login via client, create test project.
     Project configs are thrown over params and automatically grabs from functions names started with 'project_'
 
     :param client: fixture with http client (from pytest-django package) and simulation of http server
@@ -341,15 +360,24 @@ def setup_project(client, project_template, do_auth=True):
     user.save()
 
     if do_auth:
-
         assert signin(client, email, password).status_code == 302
         # create project
         with requests_mock.Mocker() as m:
-            m.register_uri('POST', re.compile(r'ml\.heartex\.net/\d+/validate'), text=json.dumps({'status': 'ok'}))
-            m.register_uri('GET', re.compile(r'ml\.heartex\.net/\d+/health'), text=json.dumps({'status': 'UP'}))
+            m.register_uri(
+                'POST',
+                re.compile(r'ml\.heartex\.net/\d+/validate'),
+                text=json.dumps({'status': 'ok'}),
+            )
+            m.register_uri(
+                'GET',
+                re.compile(r'ml\.heartex\.net/\d+/health'),
+                text=json.dumps({'status': 'UP'}),
+            )
             r = client.post(urls.project_create, data=project_config)
             print('Project create with status code:', r.status_code)
-            assert r.status_code == 201, f'Create project result should be redirect to the next page'
+            assert (
+                r.status_code == 201
+            ), f'Create project result should be redirect to the next page'
 
         # get project id and prepare url
         project = Project.objects.filter(title=project_config['title']).first()
@@ -465,20 +493,24 @@ def configured_project(business_client, annotator_client):
                 <Choice value="class_A"></Choice>
                 <Choice value="class_B"></Choice>
               </Choices>
-            </View>'''
+            </View>''',
     )
     _2_tasks_with_textA_and_textB = [
         {'meta_info': 'meta info A', 'text': 'text A'},
-        {'meta_info': 'meta info B', 'text': 'text B'}
+        {'meta_info': 'meta info B', 'text': 'text B'},
     ]
 
     # get user to be owner
-    users = User.objects.filter(email='business@pytest.net')  # TODO: @nik: how to get proper email for business here?
+    users = User.objects.filter(
+        email='business@pytest.net'
+    )  # TODO: @nik: how to get proper email for business here?
     project = make_project(_project_for_text_choices_onto_A_B_classes, users[0])
 
     assert project.ml_backends.first().url == 'http://localhost:8999'
 
-    Task.objects.bulk_create([Task(data=task, project=project) for task in _2_tasks_with_textA_and_textB])
+    Task.objects.bulk_create(
+        [Task(data=task, project=project) for task in _2_tasks_with_textA_and_textB]
+    )
     return project
 
 
@@ -490,10 +522,12 @@ def get_server_url(live_server):
 @pytest.fixture(name="async_import_off", autouse=True)
 def async_import_off():
     from core.feature_flags import flag_set
+
     def fake_flag_set(*args, **kwargs):
         if args[0] == 'fflag_feat_all_lsdv_4915_async_task_import_13042023_short':
             return False
         return flag_set(*args, **kwargs)
+
     with mock.patch('data_import.api.flag_set', wraps=fake_flag_set):
         yield
 
@@ -501,21 +535,27 @@ def async_import_off():
 @pytest.fixture(name="fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short_on")
 def fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short_on():
     from core.feature_flags import flag_set
+
     def fake_flag_set(*args, **kwargs):
         if args[0] == 'fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short':
             return True
         return flag_set(*args, **kwargs)
+
     with mock.patch('tasks.models.flag_set', wraps=fake_flag_set):
         yield
 
 
-@pytest.fixture(name="fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short_off")
+@pytest.fixture(
+    name="fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short_off"
+)
 def fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short_off():
     from core.feature_flags import flag_set
+
     def fake_flag_set(*args, **kwargs):
         if args[0] == 'fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short':
             return False
         return flag_set(*args, **kwargs)
+
     with mock.patch('tasks.models.flag_set', wraps=fake_flag_set):
         yield
 
@@ -546,5 +586,9 @@ def local_files_document_root_subdir(settings):
 @pytest.fixture(name="testing_session_timeouts")
 def set_testing_session_timeouts(settings):
     # TODO: functional tests should not rely on exact timings
-    settings.MAX_SESSION_AGE = int(get_env('MAX_SESSION_AGE', timedelta(seconds=5).total_seconds()))
-    settings.MAX_TIME_BETWEEN_ACTIVITY = int(get_env('MAX_TIME_BETWEEN_ACTIVITY', timedelta(seconds=2).total_seconds()))
+    settings.MAX_SESSION_AGE = int(
+        get_env('MAX_SESSION_AGE', timedelta(seconds=5).total_seconds())
+    )
+    settings.MAX_TIME_BETWEEN_ACTIVITY = int(
+        get_env('MAX_TIME_BETWEEN_ACTIVITY', timedelta(seconds=2).total_seconds())
+    )

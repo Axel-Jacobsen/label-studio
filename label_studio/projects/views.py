@@ -39,8 +39,7 @@ def playground_replacements(request, task_data):
 
 @require_http_methods(['GET', 'POST'])
 def upload_example_using_config(request):
-    """ Generate upload data example by config only
-    """
+    """Generate upload data example by config only"""
     config = request.GET.get('label_config', '')
     if not config:
         config = request.POST.get('label_config', '')
@@ -56,7 +55,9 @@ def upload_example_using_config(request):
         task_data, _, _ = get_sample_task(config, secure_mode)
         task_data = playground_replacements(request, task_data)
     except (ValueError, ValidationError, lxml.etree.Error):
-        response = HttpResponse('error while example generating', status=status.HTTP_400_BAD_REQUEST)
+        response = HttpResponse(
+            'error while example generating', status=status.HTTP_400_BAD_REQUEST
+        )
     else:
         response = HttpResponse(json.dumps(task_data))
     return response

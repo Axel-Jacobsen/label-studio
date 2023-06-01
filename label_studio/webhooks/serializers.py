@@ -5,9 +5,10 @@ from .models import Webhook, WebhookAction
 
 
 class WebhookSerializer(serializers.ModelSerializer):
-
     actions = serializers.ListField(
-        child=serializers.ChoiceField(choices=WebhookAction.ACTIONS), default=[], source='_actions'
+        child=serializers.ChoiceField(choices=WebhookAction.ACTIONS),
+        default=[],
+        source='_actions',
     )
 
     class Meta:

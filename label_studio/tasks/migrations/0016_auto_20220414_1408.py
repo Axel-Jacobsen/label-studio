@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('tasks', '0015_task_fill_inner_id'),
     ]
@@ -12,7 +11,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='annotation',
-            index=models.Index(fields=['task', 'completed_by'], name='task_comple_task_id_d49cd7_idx'),
+            index=models.Index(
+                fields=['task', 'completed_by'], name='task_comple_task_id_d49cd7_idx'
+            ),
         ),
         migrations.AddIndex(
             model_name='task',

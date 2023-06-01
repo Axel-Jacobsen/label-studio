@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projects', '0019_labelstreamhistory'),
     ]
@@ -12,6 +11,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddConstraint(
             model_name='labelstreamhistory',
-            constraint=models.UniqueConstraint(fields=('user', 'project'), name='unique_history'),
+            constraint=models.UniqueConstraint(
+                fields=('user', 'project'), name='unique_history'
+            ),
         ),
     ]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('io_storages', '0003_localfilesimportstorage'),
     ]
@@ -13,6 +12,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='gcsstoragemixin',
             name='google_application_credentials',
-            field=models.TextField(blank=True, help_text='The content of GOOGLE_APPLICATION_CREDENTIALS json file', null=True, verbose_name='google_application_credentials'),
+            field=models.TextField(
+                blank=True,
+                help_text='The content of GOOGLE_APPLICATION_CREDENTIALS json file',
+                null=True,
+                verbose_name='google_application_credentials',
+            ),
         ),
     ]

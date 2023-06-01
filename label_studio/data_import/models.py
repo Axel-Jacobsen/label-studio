@@ -5,6 +5,7 @@ import uuid
 import logging
 import pandas as pd
 from collections import Counter
+
 try:
     import ujson as json
 except:
@@ -22,13 +23,25 @@ def upload_name_generator(instance, filename):
     project = str(instance.project_id)
     project_dir = os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR, project)
     os.makedirs(project_dir, exist_ok=True)
-    path = settings.UPLOAD_DIR + '/' + project + '/' + str(uuid.uuid4())[0:8] + '-' + filename
+    path = (
+        settings.UPLOAD_DIR
+        + '/'
+        + project
+        + '/'
+        + str(uuid.uuid4())[0:8]
+        + '-'
+        + filename
+    )
     return path
 
 
 class FileUpload(models.Model):
-    user = models.ForeignKey('users.User', related_name='file_uploads', on_delete=models.CASCADE)
-    project = models.ForeignKey('projects.Project', related_name='file_uploads', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        'users.User', related_name='file_uploads', on_delete=models.CASCADE
+    )
+    project = models.ForeignKey(
+        'projects.Project', related_name='file_uploads', on_delete=models.CASCADE
+    )
     file = models.FileField(upload_to=upload_name_generator)
 
     def has_permission(self, user):
@@ -42,7 +55,10 @@ class FileUpload(models.Model):
     @property
     def url(self):
         if settings.HOSTNAME and settings.CLOUD_FILE_STORAGE_ENABLED:
-            if flag_set('ff_back_dev_2915_storage_nginx_proxy_26092022_short', self.project.organization.created_by):
+            if flag_set(
+                'ff_back_dev_2915_storage_nginx_proxy_26092022_short',
+                self.project.organization.created_by,
+            ):
                 return self.file.url
             else:
                 return settings.HOSTNAME + self.file.url
@@ -143,7 +159,8 @@ class FileUpload(models.Model):
             elif not self.project.one_object_in_label_config:
                 raise ValidationError(
                     'Your label config has more than one data key and direct file upload supports only '
-                    'one data key. To import data with multiple data keys, use a JSON or CSV file.')
+                    'one data key. To import data with multiple data keys, use a JSON or CSV file.'
+                )
 
             # file as a single asset
             elif file_format in ('.html', '.htm', '.xml'):
@@ -152,11 +169,20 @@ class FileUpload(models.Model):
                 tasks = self.read_task_from_uploaded_file()
 
         except Exception as exc:
-            raise ValidationError('Failed to parse input file ' + self.file.name + ': ' + str(exc))
+            raise ValidationError(
+                'Failed to parse input file ' + self.file.name + ': ' + str(exc)
+            )
         return tasks
 
     @classmethod
-    def load_tasks_from_uploaded_files(cls, project, file_upload_ids=None, formats=None, files_as_tasks_list=True, trim_size=None):
+    def load_tasks_from_uploaded_files(
+        cls,
+        project,
+        file_upload_ids=None,
+        formats=None,
+        files_as_tasks_list=True,
+        trim_size=None,
+    ):
         tasks = []
         fileformats = []
         common_data_fields = set()
@@ -173,7 +199,9 @@ class FileUpload(models.Model):
             for task in new_tasks:
                 task['file_upload_id'] = file_upload.id
 
-            new_data_fields = set(iter(new_tasks[0]['data'].keys())) if len(new_tasks) > 0 else set()
+            new_data_fields = (
+                set(iter(new_tasks[0]['data'].keys())) if len(new_tasks) > 0 else set()
+            )
             if not common_data_fields:
                 common_data_fields = new_data_fields
             elif not common_data_fields.intersection(new_data_fields):
@@ -195,21 +223,33 @@ class FileUpload(models.Model):
         return tasks, dict(Counter(fileformats)), common_data_fields
 
 
-def _old_vs_new_data_keys_inconsistency_message(new_data_keys, old_data_keys, current_file):
+def _old_vs_new_data_keys_inconsistency_message(
+    new_data_keys, old_data_keys, current_file
+):
     new_data_keys_list = ','.join(new_data_keys)
     old_data_keys_list = ','.join(old_data_keys)
     common_prefix = "You're trying to import inconsistent data:\n"
     if new_data_keys_list == old_data_keys_list:
         return ''
     elif new_data_keys_list == settings.DATA_UNDEFINED_NAME:
-        return common_prefix + "uploading a single file {0} " \
-                               "clashes with data key(s) found from other files:\n\"{1}\"".format(
-                                current_file, old_data_keys_list)
+        return (
+            common_prefix + "uploading a single file {0} "
+            "clashes with data key(s) found from other files:\n\"{1}\"".format(
+                current_file, old_data_keys_list
+            )
+        )
     elif old_data_keys_list == settings.DATA_UNDEFINED_NAME:
-        return common_prefix + "uploading tabular data from {0} with data key(s) {1}, " \
-                               "clashes with other raw binary files (images, audios, etc.)".format(
-                                current_file, new_data_keys_list)
+        return (
+            common_prefix + "uploading tabular data from {0} with data key(s) {1}, "
+            "clashes with other raw binary files (images, audios, etc.)".format(
+                current_file, new_data_keys_list
+            )
+        )
     else:
-        return common_prefix + "uploading tabular data from \"{0}\" with data key(s) \"{1}\", " \
-                               "clashes with data key(s) found from other files:\n\"{2}\"".format(
-                                current_file, new_data_keys_list, old_data_keys_list)
+        return (
+            common_prefix
+            + "uploading tabular data from \"{0}\" with data key(s) \"{1}\", "
+            "clashes with data key(s) found from other files:\n\"{2}\"".format(
+                current_file, new_data_keys_list, old_data_keys_list
+            )
+        )

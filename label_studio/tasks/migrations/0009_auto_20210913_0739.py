@@ -13,7 +13,9 @@ def forwards(apps, schema_editor):
         logger.info('Skipping migration without attempting to CREATE INDEX')
         return
 
-    schema_editor.execute('create index concurrently tasks_annotations_result_idx on task_completion using gin (upper(cast(result as text)) gin_trgm_ops);')
+    schema_editor.execute(
+        'create index concurrently tasks_annotations_result_idx on task_completion using gin (upper(cast(result as text)) gin_trgm_ops);'
+    )
 
 
 def backwards(apps, schema_editor):

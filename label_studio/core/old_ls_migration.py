@@ -22,12 +22,14 @@ from core.utils.params import get_env
 
 @contextlib.contextmanager
 def suppress_autotime(model, fields):
-    """ allow to keep original created_at value for auto_now_add=True field
-    """
+    """allow to keep original created_at value for auto_now_add=True field"""
     _original_values = {}
     for field in model._meta.local_fields:
         if field.name in fields:
-            _original_values[field.name] = {'auto_now': field.auto_now, 'auto_now_add': field.auto_now_add}
+            _original_values[field.name] = {
+                'auto_now': field.auto_now,
+                'auto_now_add': field.auto_now_add,
+            }
             field.auto_now = False
             field.auto_now_add = False
     try:
@@ -40,7 +42,7 @@ def suppress_autotime(model, fields):
 
 
 def _migrate_tasks(project_path, project):
-    """ Migrate tasks from json file to database objects"""
+    """Migrate tasks from json file to database objects"""
     tasks_path = project_path / 'tasks.json'
     with io.open(os.path.abspath(tasks_path), encoding='utf-8') as t:
         tasks_data = json.load(t)
@@ -61,18 +63,26 @@ def _migrate_tasks(project_path, project):
                             completed_by=project.created_by,
                         )
                         with suppress_autotime(task_annotation, ['created_at']):
-                            task_annotation.created_at = datetime.datetime.fromtimestamp(
-                                annotation['created_at'], tz=datetime.datetime.now().astimezone().tzinfo
+                            task_annotation.created_at = (
+                                datetime.datetime.fromtimestamp(
+                                    annotation['created_at'],
+                                    tz=datetime.datetime.now().astimezone().tzinfo,
+                                )
                             )
                             task_annotation.save()
 
             # migrate predictions
             predictions_data = task_data.get('predictions', [])
             for prediction in predictions_data:
-                task_prediction = Prediction(result=prediction['result'], task=task, score=prediction.get('score'))
+                task_prediction = Prediction(
+                    result=prediction['result'],
+                    task=task,
+                    score=prediction.get('score'),
+                )
                 with suppress_autotime(task_prediction, ['created_at']):
                     task_prediction.created_at = datetime.datetime.fromtimestamp(
-                        prediction['created_at'], tz=datetime.datetime.now().astimezone().tzinfo
+                        prediction['created_at'],
+                        tz=datetime.datetime.now().astimezone().tzinfo,
                     )
                     task_prediction.save()
 
@@ -93,7 +103,9 @@ def _migrate_tabs(project_path, project):
                 filter_group = None
                 filters = tab.pop('filters', None)
                 if filters is not None:
-                    filter_group = FilterGroup.objects.create(conjunction=filters.get('conjunction', 'and'))
+                    filter_group = FilterGroup.objects.create(
+                        conjunction=filters.get('conjunction', 'and')
+                    )
                     if "items" in filters:
                         for f in filters["items"]:
                             view_filter = Filter.objects.create(
@@ -111,9 +123,13 @@ def _migrate_tabs(project_path, project):
                 # apply naming change to tabs internal data
                 if hidden_columns_data is not None:
                     for c in hidden_columns_data.get('explore', []):
-                        hidden_columns['explore'].append(c.replace('completion', 'annotation'))
+                        hidden_columns['explore'].append(
+                            c.replace('completion', 'annotation')
+                        )
                     for c in hidden_columns_data.get('labeling', []):
-                        hidden_columns['labeling'].append(c.replace('completion', 'annotation'))
+                        hidden_columns['labeling'].append(
+                            c.replace('completion', 'annotation')
+                        )
                     tab['hiddenColumns'] = hidden_columns
                 view.data = tab
                 view.ordering = ordering
@@ -213,7 +229,9 @@ def _migrate_ml_backends(project, config):
     """Migrate ml backend settings from config.json to database"""
     ml_backends = config.get('ml_backends', [])
     for ml_backend in ml_backends:
-        MLBackend.objects.create(project=project, url=ml_backend.get('url'), title=ml_backend.get('name'))
+        MLBackend.objects.create(
+            project=project, url=ml_backend.get('url'), title=ml_backend.get('name')
+        )
 
 
 def _migrate_uploaded_files(project, project_path):
@@ -221,7 +239,9 @@ def _migrate_uploaded_files(project, project_path):
     source_upload_path = project_path / 'upload'
     if not source_upload_path.exists():
         return
-    target_upload_path = pathlib.Path(get_env('LABEL_STUDIO_BASE_DATA_DIR', get_data_dir())) / 'upload'
+    target_upload_path = (
+        pathlib.Path(get_env('LABEL_STUDIO_BASE_DATA_DIR', get_data_dir())) / 'upload'
+    )
     if not target_upload_path.exists():
         os.makedirs(str(target_upload_path), exist_ok=True)
 
@@ -229,7 +249,9 @@ def _migrate_uploaded_files(project, project_path):
     for file_name in src_files:
         full_file_name = os.path.join(str(source_upload_path), file_name)
         with open(full_file_name, 'rb') as f:
-            FileUpload.objects.create(user=project.created_by, project=project, file=File(f, name=file_name))
+            FileUpload.objects.create(
+                user=project.created_by, project=project, file=File(f, name=file_name)
+            )
 
 
 def migrate_existing_project(project_path, project, config):
@@ -240,4 +262,3 @@ def migrate_existing_project(project_path, project, config):
     _migrate_storages(project, config)
     _migrate_ml_backends(project, config)
     _migrate_uploaded_files(project, project_path)
-

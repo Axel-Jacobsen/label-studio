@@ -42,8 +42,10 @@ class MLBackend(models.Model):
     is_interactive = models.BooleanField(
         _('is_interactive'),
         default=False,
-        help_text=("Used to interactively annotate tasks. "
-                   'If true, model returns one list with results')
+        help_text=(
+            "Used to interactively annotate tasks. "
+            'If true, model returns one list with results'
+        ),
     )
     url = models.TextField(
         _('url'),
@@ -92,7 +94,7 @@ class MLBackend(models.Model):
     auto_update = models.BooleanField(
         _('auto_update'),
         default=True,
-        help_text='If false, model version is set by the user, if true - getting latest version from backend.'
+        help_text='If false, model version is set by the user, if true - getting latest version from backend.',
     )
 
     def __str__(self):
@@ -117,7 +119,9 @@ class MLBackend(models.Model):
         return self.healthcheck_(self.url)
 
     def setup(self):
-        return self.setup_(self.url, self.project, None if self.auto_update else self.model_version)
+        return self.setup_(
+            self.url, self.project, None if self.auto_update else self.model_version
+        )
 
     @property
     def api(self):
@@ -133,16 +137,22 @@ class MLBackend(models.Model):
         else:
             setup_response = self.setup()
             if setup_response.is_error:
-                logger.info(f'ML backend responds with error: {setup_response.error_message}')
+                logger.info(
+                    f'ML backend responds with error: {setup_response.error_message}'
+                )
                 self.state = MLBackendState.ERROR
                 self.error_message = setup_response.error_message
             else:
                 self.state = MLBackendState.CONNECTED
                 model_version = setup_response.response.get('model_version')
-                logger.info(f'ML backend responds with success: {setup_response.response}')
+                logger.info(
+                    f'ML backend responds with success: {setup_response.response}'
+                )
                 if self.auto_update:
                     self.model_version = model_version
-                    logger.debug(f'Changing model version: {self.model_version} -> {model_version}')
+                    logger.debug(
+                        f'Changing model version: {self.model_version} -> {model_version}'
+                    )
                 self.error_message = None
         self.save()
 
@@ -155,7 +165,9 @@ class MLBackend(models.Model):
             self.state = MLBackendState.TRAINING
             current_train_job = train_response.response.get('job')
             if current_train_job:
-                MLBackendTrainJob.objects.create(job_id=current_train_job, ml_backend=self)
+                MLBackendTrainJob.objects.create(
+                    job_id=current_train_job, ml_backend=self
+                )
         self.save()
 
     def predict_tasks(self, tasks):
@@ -170,13 +182,22 @@ class MLBackend(models.Model):
             tasks = Task.objects.filter(id__in=[task.id for task in tasks])
 
         tasks_ser = TaskSimpleSerializer(tasks, many=True).data
-        ml_api_result = self.api.make_predictions(tasks_ser, self.model_version, self.project)
+        ml_api_result = self.api.make_predictions(
+            tasks_ser, self.model_version, self.project
+        )
         if ml_api_result.is_error:
-            logger.info(f'Prediction not created for project {self}: {ml_api_result.error_message}')
+            logger.info(
+                f'Prediction not created for project {self}: {ml_api_result.error_message}'
+            )
             return
 
-        if not (isinstance(ml_api_result.response, dict) and 'results' in ml_api_result.response):
-            logger.info(f'ML backend returns an incorrect response, it should be a dict: {ml_api_result.response}')
+        if not (
+            isinstance(ml_api_result.response, dict)
+            and 'results' in ml_api_result.response
+        ):
+            logger.info(
+                f'ML backend returns an incorrect response, it should be a dict: {ml_api_result.response}'
+            )
             return
 
         responses = ml_api_result.response['results']
@@ -197,7 +218,9 @@ class MLBackend(models.Model):
 
         # wrong result number
         elif len(responses) != len(tasks_ser):
-            logger.warning(f'ML backend returned response number {len(responses)} != task number {len(tasks_ser)}')
+            logger.warning(
+                f'ML backend returned response number {len(responses)} != task number {len(tasks_ser)}'
+            )
 
         predictions = []
         for task, response in zip(tasks_ser, responses):
@@ -213,7 +236,9 @@ class MLBackend(models.Model):
                     'task': task['id'],
                     'result': response['result'],
                     'score': response.get('score'),
-                    'model_version': ml_api_result.response.get('model_version', self.model_version),
+                    'model_version': ml_api_result.response.get(
+                        'model_version', self.model_version
+                    ),
                 }
             )
         with conditional_atomic():
@@ -236,13 +261,20 @@ class MLBackend(models.Model):
         ml_api = self.api
 
         task_ser = TaskSimpleSerializer(task).data
-        ml_api_result = ml_api.make_predictions([task_ser], self.model_version, self.project)
+        ml_api_result = ml_api.make_predictions(
+            [task_ser], self.model_version, self.project
+        )
         if ml_api_result.is_error:
-            logger.info(f'Prediction not created for project {self}: {ml_api_result.error_message}')
+            logger.info(
+                f'Prediction not created for project {self}: {ml_api_result.error_message}'
+            )
             return
         results = ml_api_result.response['results']
         if len(results) == 0:
-            logger.error(f'ML backend returned empty prediction for project {self.id}', extra={'sentry_skip': True})
+            logger.error(
+                f'ML backend returned empty prediction for project {self.id}',
+                extra={'sentry_skip': True},
+            )
             return
         prediction_response = results[0]
         task_id = task_ser['id']
@@ -268,10 +300,17 @@ class MLBackend(models.Model):
         if user:
             options = {'user': user}
         if not self.is_interactive:
-            result['errors'] = ["Model is not set to be used for interactive preannotations"]
+            result['errors'] = [
+                "Model is not set to be used for interactive preannotations"
+            ]
             return result
 
-        tasks_ser = InteractiveAnnotatingDataSerializer([task], many=True, expand=['drafts', 'predictions', 'annotations'], context=options).data
+        tasks_ser = InteractiveAnnotatingDataSerializer(
+            [task],
+            many=True,
+            expand=['drafts', 'predictions', 'annotations'],
+            context=options,
+        ).data
         ml_api_result = self.api.make_predictions(
             tasks=tasks_ser,
             model_version=self.model_version,
@@ -279,14 +318,23 @@ class MLBackend(models.Model):
             context=context,
         )
         if ml_api_result.is_error:
-            logger.info(f'Prediction not created for project {self}: {ml_api_result.error_message}')
+            logger.info(
+                f'Prediction not created for project {self}: {ml_api_result.error_message}'
+            )
             result['errors'] = [ml_api_result.error_message]
             return result
 
-        if not (isinstance(ml_api_result.response, dict) and 'results' in ml_api_result.response):
-            logger.info(f'ML backend returns an incorrect response, it must be a dict: {ml_api_result.response}')
-            result['errors'] = ['Incorrect response from ML service: '
-                                'ML backend returns an incorrect response, it must be a dict.']
+        if not (
+            isinstance(ml_api_result.response, dict)
+            and 'results' in ml_api_result.response
+        ):
+            logger.info(
+                f'ML backend returns an incorrect response, it must be a dict: {ml_api_result.response}'
+            )
+            result['errors'] = [
+                'Incorrect response from ML service: '
+                'ML backend returns an incorrect response, it must be a dict.'
+            ]
             return result
 
         ml_results = ml_api_result.response.get(
@@ -296,9 +344,13 @@ class MLBackend(models.Model):
             ],
         )
         if not isinstance(ml_results, list) or len(ml_results) < 1:
-            logger.warning(f'ML backend has to return list with 1 annotation but it returned: {type(ml_results)}')
-            result['errors'] = ['Incorrect response from ML service: '
-                                'ML backend has to return list with more than 1 result.']
+            logger.warning(
+                f'ML backend has to return list with 1 annotation but it returned: {type(ml_results)}'
+            )
+            result['errors'] = [
+                'Incorrect response from ML service: '
+                'ML backend has to return list with more than 1 result.'
+            ]
             return result
 
         result['data'] = ml_results[0]
@@ -316,11 +368,15 @@ class MLBackend(models.Model):
 
 
 class MLBackendPredictionJob(models.Model):
-
     job_id = models.CharField(max_length=128)
-    ml_backend = models.ForeignKey(MLBackend, related_name='prediction_jobs', on_delete=models.CASCADE)
+    ml_backend = models.ForeignKey(
+        MLBackend, related_name='prediction_jobs', on_delete=models.CASCADE
+    )
     model_version = models.TextField(
-        _('model version'), blank=True, null=True, help_text='Model version this job is associated with'
+        _('model version'),
+        blank=True,
+        null=True,
+        help_text='Model version this job is associated with',
     )
     batch_size = models.PositiveSmallIntegerField(
         _('batch size'), default=100, help_text='Number of tasks processed per batch'
@@ -331,9 +387,10 @@ class MLBackendPredictionJob(models.Model):
 
 
 class MLBackendTrainJob(models.Model):
-
     job_id = models.CharField(max_length=128)
-    ml_backend = models.ForeignKey(MLBackend, related_name='train_jobs', on_delete=models.CASCADE)
+    ml_backend = models.ForeignKey(
+        MLBackend, related_name='train_jobs', on_delete=models.CASCADE
+    )
     model_version = models.TextField(
         _('model version'),
         blank=True,
@@ -347,7 +404,9 @@ class MLBackendTrainJob(models.Model):
         project = self.ml_backend.project
         ml_api = project.get_ml_api()
         if not ml_api:
-            logger.error(f'Training job {self.id}: Can\'t collect training jobs for project {project.id}: ML API is null')
+            logger.error(
+                f'Training job {self.id}: Can\'t collect training jobs for project {project.id}: ML API is null'
+            )
             return None
         ml_api_result = ml_api.get_train_job_status(self)
         if ml_api_result.is_error:
@@ -373,7 +432,11 @@ def _validate_ml_api_result(ml_api_result, tasks, curr_logger):
 
     results = ml_api_result.response['results']
     if not isinstance(results, list) or len(results) != len(tasks):
-        curr_logger.warning('Num input tasks is %d but ML API returns %d results', len(tasks), len(results))
+        curr_logger.warning(
+            'Num input tasks is %d but ML API returns %d results',
+            len(tasks),
+            len(results),
+        )
         return False
 
     return True
@@ -387,14 +450,18 @@ def create_ml_webhook(sender, instance, created, **kwargs):
     webhook_url = ml_backend.url.rstrip('/') + '/webhook'
     project = ml_backend.project
     if Webhook.objects.filter(project=project, url=webhook_url).exists():
-        logger.info(f'Webhook {webhook_url} already exists for project {project}: skip creating new one.')
+        logger.info(
+            f'Webhook {webhook_url} already exists for project {project}: skip creating new one.'
+        )
         return
     logger.info(f'Create ML backend webhook {webhook_url}')
-    ser = WebhookSerializer(data=dict(
-        project=project.id,
-        url=webhook_url,
-        send_payload=True,
-        send_for_all_actions=True)
+    ser = WebhookSerializer(
+        data=dict(
+            project=project.id,
+            url=webhook_url,
+            send_payload=True,
+            send_for_all_actions=True,
+        )
     )
     if ser.is_valid():
         ser.save(organization=project.organization)

@@ -4,11 +4,16 @@ import os
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from io_storages.serializers import ImportStorageSerializer, ExportStorageSerializer
-from io_storages.localfiles.models import LocalFilesImportStorage, LocalFilesExportStorage
+from io_storages.localfiles.models import (
+    LocalFilesImportStorage,
+    LocalFilesExportStorage,
+)
 
 
 class LocalFilesImportStorageSerializer(ImportStorageSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     class Meta:
         model = LocalFilesImportStorage
@@ -26,14 +31,15 @@ class LocalFilesImportStorageSerializer(ImportStorageSerializer):
 
 
 class LocalFilesExportStorageSerializer(ExportStorageSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     class Meta:
         model = LocalFilesExportStorage
         fields = '__all__'
-    
+
     def validate(self, data):
         # Validate local file path
         data = super(LocalFilesExportStorageSerializer, self).validate(data)
         return data
-

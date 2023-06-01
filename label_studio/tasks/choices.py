@@ -4,7 +4,9 @@ from django.utils.translation import gettext_lazy as _
 
 class ActionType(models.TextChoices):
     CREATED_FROM_PREDICTION = 'prediction', _('Created from prediction')
-    PROPAGATED_ANNOTATION = 'propagated_annotation', _('Created from another annotation')
+    PROPAGATED_ANNOTATION = 'propagated_annotation', _(
+        'Created from another annotation'
+    )
     IMPORTED = 'imported', _('Imported')
     SUBMITTED = 'submitted', _('Submitted')
     UPDATED = 'updated', _('Updated')

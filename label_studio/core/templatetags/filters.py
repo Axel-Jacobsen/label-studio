@@ -13,8 +13,7 @@ register = template.Library()
 
 @register.filter
 def initials(val, jn=""):
-    """ Given a string return its initials join by $jn
-    """
+    """Given a string return its initials join by $jn"""
     res = []
     parts = val.split(' ')
     if len(parts) <= 1:
@@ -22,12 +21,12 @@ def initials(val, jn=""):
         print(parts)
 
     if len(parts) > 1:
-        res = [ parts[0][0], parts[1][0] ]
+        res = [parts[0][0], parts[1][0]]
     elif len(parts) == 1:
-        res = [ val[0], val[1] ]
-        
+        res = [val[0], val[1]]
+
     return jn.join(res).upper()
-        
+
 
 @register.filter
 def get_at_index(l, index):

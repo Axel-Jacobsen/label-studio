@@ -21,7 +21,7 @@ from io_storages.base_models import (
     ExportStorageLink,
     ImportStorage,
     ImportStorageLink,
-    ProjectStorageMixin
+    ProjectStorageMixin,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,32 +33,40 @@ clients_cache = {}
 
 class S3StorageMixin(models.Model):
     bucket = models.TextField(
-        _('bucket'), null=True, blank=True,
-        help_text='S3 bucket name')
+        _('bucket'), null=True, blank=True, help_text='S3 bucket name'
+    )
     prefix = models.TextField(
-        _('prefix'), null=True, blank=True,
-        help_text='S3 bucket prefix')
+        _('prefix'), null=True, blank=True, help_text='S3 bucket prefix'
+    )
     regex_filter = models.TextField(
-        _('regex_filter'), null=True, blank=True,
-        help_text='Cloud storage regex for filtering objects')
+        _('regex_filter'),
+        null=True,
+        blank=True,
+        help_text='Cloud storage regex for filtering objects',
+    )
     use_blob_urls = models.BooleanField(
-        _('use_blob_urls'), default=False,
-        help_text='Interpret objects as BLOBs and generate URLs')
+        _('use_blob_urls'),
+        default=False,
+        help_text='Interpret objects as BLOBs and generate URLs',
+    )
     aws_access_key_id = models.TextField(
-        _('aws_access_key_id'), null=True, blank=True,
-        help_text='AWS_ACCESS_KEY_ID')
+        _('aws_access_key_id'), null=True, blank=True, help_text='AWS_ACCESS_KEY_ID'
+    )
     aws_secret_access_key = models.TextField(
-        _('aws_secret_access_key'), null=True, blank=True,
-        help_text='AWS_SECRET_ACCESS_KEY')
+        _('aws_secret_access_key'),
+        null=True,
+        blank=True,
+        help_text='AWS_SECRET_ACCESS_KEY',
+    )
     aws_session_token = models.TextField(
-        _('aws_session_token'), null=True, blank=True,
-        help_text='AWS_SESSION_TOKEN')
+        _('aws_session_token'), null=True, blank=True, help_text='AWS_SESSION_TOKEN'
+    )
     region_name = models.TextField(
-        _('region_name'), null=True, blank=True,
-        help_text='AWS Region')
+        _('region_name'), null=True, blank=True, help_text='AWS Region'
+    )
     s3_endpoint = models.TextField(
-        _('s3_endpoint'), null=True, blank=True,
-        help_text='S3 Endpoint')
+        _('s3_endpoint'), null=True, blank=True, help_text='S3 Endpoint'
+    )
 
     def get_client_and_resource(self):
         # s3 client initialization ~ 100 ms, for 30 tasks it's a 3 seconds, so we need to cache it
@@ -67,8 +75,12 @@ class S3StorageMixin(models.Model):
             return clients_cache[cache_key]
 
         result = get_client_and_resource(
-            self.aws_access_key_id, self.aws_secret_access_key, self.aws_session_token, self.region_name,
-            self.s3_endpoint)
+            self.aws_access_key_id,
+            self.aws_secret_access_key,
+            self.aws_session_token,
+            self.region_name,
+            self.s3_endpoint,
+        )
         clients_cache[cache_key] = result
         return result
 
@@ -88,10 +100,16 @@ class S3StorageMixin(models.Model):
             client = self.get_client()
         # we need to check path existence for Import storages only
         if self.prefix and 'Export' not in self.__class__.__name__:
-            logger.debug(f'Test connection to bucket {self.bucket} with prefix {self.prefix}')
-            result = client.list_objects_v2(Bucket=self.bucket, Prefix=self.prefix, MaxKeys=1)
+            logger.debug(
+                f'Test connection to bucket {self.bucket} with prefix {self.prefix}'
+            )
+            result = client.list_objects_v2(
+                Bucket=self.bucket, Prefix=self.prefix, MaxKeys=1
+            )
             if not result.get('KeyCount'):
-                raise KeyError(f'{self.url_scheme}://{self.bucket}/{self.prefix} not found.')
+                raise KeyError(
+                    f'{self.url_scheme}://{self.bucket}/{self.prefix} not found.'
+                )
         else:
             logger.debug(f'Test connection to bucket {self.bucket}')
             client.head_bucket(Bucket=self.bucket)
@@ -110,18 +128,19 @@ class S3StorageMixin(models.Model):
 
 
 class S3ImportStorageBase(S3StorageMixin, ImportStorage):
-
     url_scheme = 's3'
 
     presign = models.BooleanField(
-        _('presign'), default=True,
-        help_text='Generate presigned URLs')
+        _('presign'), default=True, help_text='Generate presigned URLs'
+    )
     presign_ttl = models.PositiveSmallIntegerField(
-        _('presign_ttl'), default=1,
-        help_text='Presigned URLs TTL (in minutes)')
+        _('presign_ttl'), default=1, help_text='Presigned URLs TTL (in minutes)'
+    )
     recursive_scan = models.BooleanField(
-        _('recursive scan'), default=False,
-        help_text=_('Perform recursive scan over the bucket content'))
+        _('recursive scan'),
+        default=False,
+        help_text=_('Perform recursive scan over the bucket content'),
+    )
 
     def iterkeys(self):
         client, bucket = self.get_client_and_bucket()
@@ -147,11 +166,12 @@ class S3ImportStorageBase(S3StorageMixin, ImportStorage):
         return self._scan_and_create_links(S3ImportStorageLink)
 
     def _get_validated_task(self, parsed_data, key):
-        """ Validate parsed data with labeling config and task structure
-        """
+        """Validate parsed data with labeling config and task structure"""
         if not isinstance(parsed_data, dict):
-            raise TaskValidationError('Error at ' + str(key) + ':\n'
-                                      'Cloud storage supports one task (one dict object) per JSON file only. ')
+            raise TaskValidationError(
+                'Error at ' + str(key) + ':\n'
+                'Cloud storage supports one task (one dict object) per JSON file only. '
+            )
         return parsed_data
 
     def get_data(self, key):
@@ -166,13 +186,17 @@ class S3ImportStorageBase(S3StorageMixin, ImportStorage):
         obj = s3.Object(bucket.name, key).get()['Body'].read().decode('utf-8')
         value = json.loads(obj)
         if not isinstance(value, dict):
-            raise ValueError(f"Error on key {key}: For S3 your JSON file must be a dictionary with one task")
+            raise ValueError(
+                f"Error on key {key}: For S3 your JSON file must be a dictionary with one task"
+            )
 
         value = self._get_validated_task(value, key)
         return value
 
     def generate_http_url(self, url):
-        return resolve_s3_url(url, self.get_client(), self.presign, expires_in=self.presign_ttl * 60)
+        return resolve_s3_url(
+            url, self.get_client(), self.presign, expires_in=self.presign_ttl * 60
+        )
 
     class Meta:
         abstract = True
@@ -184,10 +208,11 @@ class S3ImportStorage(ProjectStorageMixin, S3ImportStorageBase):
 
 
 class S3ExportStorage(S3StorageMixin, ExportStorage):
-
     def save_annotation(self, annotation):
         client, s3 = self.get_client_and_resource()
-        logger.debug(f'Creating new object on {self.__class__.__name__} Storage {self} for annotation {annotation}')
+        logger.debug(
+            f'Creating new object on {self.__class__.__name__} Storage {self} for annotation {annotation}'
+        )
         ser_annotation = self._get_serialized_data(annotation)
 
         # get key that identifies this object in storage
@@ -196,11 +221,13 @@ class S3ExportStorage(S3StorageMixin, ExportStorage):
 
         # put object into storage
         additional_params = {}
-        if flag_set('fflag_feat_back_lsdv_3958_server_side_encryption_for_target_storage_short', user='auto'):
+        if flag_set(
+            'fflag_feat_back_lsdv_3958_server_side_encryption_for_target_storage_short',
+            user='auto',
+        ):
             additional_params = {'ServerSideEncryption': 'AES256'}
         s3.Object(self.bucket, key).put(
-            Body=json.dumps(ser_annotation),
-            **additional_params
+            Body=json.dumps(ser_annotation), **additional_params
         )
 
         # create link if everything ok
@@ -208,7 +235,9 @@ class S3ExportStorage(S3StorageMixin, ExportStorage):
 
     def delete_annotation(self, annotation):
         client, s3 = self.get_client_and_resource()
-        logger.debug(f'Deleting object on {self.__class__.__name__} Storage {self} for annotation {annotation}')
+        logger.debug(
+            f'Deleting object on {self.__class__.__name__} Storage {self} for annotation {annotation}'
+        )
 
         # get key that identifies this object in storage
         key = S3ExportStorageLink.get_key(annotation)
@@ -247,17 +276,23 @@ def delete_annotation_from_s3_storages(sender, instance, **kwargs):
 
 
 class S3ImportStorageLink(ImportStorageLink):
-    storage = models.ForeignKey(S3ImportStorage, on_delete=models.CASCADE, related_name='links')
+    storage = models.ForeignKey(
+        S3ImportStorage, on_delete=models.CASCADE, related_name='links'
+    )
 
     @classmethod
     def exists(cls, key, storage):
         storage_link_exists = super(S3ImportStorageLink, cls).exists(key, storage)
         # TODO: this is a workaround to be compatible with old keys version - remove it later
         prefix = str(storage.prefix) or ''
-        return storage_link_exists or \
-            cls.objects.filter(key=prefix + key, storage=storage.id).exists() or \
-            cls.objects.filter(key=prefix + '/' + key, storage=storage.id).exists()
+        return (
+            storage_link_exists
+            or cls.objects.filter(key=prefix + key, storage=storage.id).exists()
+            or cls.objects.filter(key=prefix + '/' + key, storage=storage.id).exists()
+        )
 
 
 class S3ExportStorageLink(ExportStorageLink):
-    storage = models.ForeignKey(S3ExportStorage, on_delete=models.CASCADE, related_name='links')
+    storage = models.ForeignKey(
+        S3ExportStorage, on_delete=models.CASCADE, related_name='links'
+    )

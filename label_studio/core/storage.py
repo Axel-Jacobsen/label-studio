@@ -18,9 +18,8 @@ from storages.backends.gcloud import _quote, clean_name, GoogleCloudStorage
 logger = logging.getLogger(__name__)
 
 
-
 class SkipMissedManifestStaticFilesStorage(ManifestStaticFilesStorage):
-    """ We need this class to escape missing files from
+    """We need this class to escape missing files from
     django.contrib.staticfiles.finders.FileSystemFinder:
     this class tries to find js/css/png/jpg/... inside of you js/css/...
     """
@@ -52,8 +51,7 @@ class SkipMissedManifestStaticFilesStorage(ManifestStaticFilesStorage):
         root, ext = os.path.splitext(filename)
         if file_hash is not None:
             file_hash = ".%s" % file_hash
-        hashed_name = os.path.join(path, "%s%s%s" %
-                                   (root, file_hash, ext))
+        hashed_name = os.path.join(path, "%s%s%s" % (root, file_hash, ext))
         unparsed_name = list(parsed_name)
         unparsed_name[2] = hashed_name
         # Special casing for a @font-face hack, like url(myfont.eot?#iefix")
@@ -103,7 +101,9 @@ class AlternativeGoogleCloudStorageBase(GoogleCloudStorage):
         blob = self.bucket.blob(name)
         blob_params = self.get_object_parameters(name)
         no_signed_url = (
-            blob_params.get('acl', self.default_acl) == 'publicRead' or not self.querystring_auth)
+            blob_params.get('acl', self.default_acl) == 'publicRead'
+            or not self.querystring_auth
+        )
 
         if not self.custom_endpoint and no_signed_url:
             return blob.public_url
@@ -115,9 +115,7 @@ class AlternativeGoogleCloudStorageBase(GoogleCloudStorage):
             return out
         elif not self.custom_endpoint:
             out2 = blob.generate_signed_url(
-                expiration=self.expiration,
-                version="v4",
-                **self._get_signing_kwargs()
+                expiration=self.expiration, version="v4", **self._get_signing_kwargs()
             )
             return out2
         else:
@@ -125,14 +123,16 @@ class AlternativeGoogleCloudStorageBase(GoogleCloudStorage):
                 bucket_bound_hostname=self.custom_endpoint,
                 expiration=self.expiration,
                 version="v4",
-                **self._get_signing_kwargs()
+                **self._get_signing_kwargs(),
             )
             return out3
 
     def _get_signing_credentials(self):
         with self._signing_credentials_lock:
             if self._signing_credentials is None or self._signing_credentials.expired:
-                credentials, _ = google.auth.default(['https://www.googleapis.com/auth/cloud-platform'])
+                credentials, _ = google.auth.default(
+                    ['https://www.googleapis.com/auth/cloud-platform']
+                )
                 auth_req = google.auth.transport.requests.Request()
                 credentials.refresh(auth_req)
                 self._signing_credentials = credentials
@@ -143,10 +143,12 @@ class AlternativeGoogleCloudStorageBase(GoogleCloudStorage):
         out = {
             "service_account_email": credentials.service_account_email,
             "access_token": credentials.token,
-            "credentials": credentials
+            "credentials": credentials,
         }
         return out
 
 
-class AlternativeGoogleCloudStorage(StorageProxyMixin, AlternativeGoogleCloudStorageBase):
+class AlternativeGoogleCloudStorage(
+    StorageProxyMixin, AlternativeGoogleCloudStorageBase
+):
     pass

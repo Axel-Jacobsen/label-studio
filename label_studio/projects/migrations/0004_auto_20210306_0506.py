@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projects', '0003_project_color'),
     ]
@@ -38,72 +37,140 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='project',
             name='description',
-            field=models.TextField(blank=True, default='', help_text='Project description', null=True, verbose_name='description'),
+            field=models.TextField(
+                blank=True,
+                default='',
+                help_text='Project description',
+                null=True,
+                verbose_name='description',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='enable_empty_completion',
-            field=models.BooleanField(default=True, help_text='Allow annotators to submit empty annotations', verbose_name='enable empty annotation'),
+            field=models.BooleanField(
+                default=True,
+                help_text='Allow annotators to submit empty annotations',
+                verbose_name='enable empty annotation',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='expert_instruction',
-            field=models.TextField(blank=True, default='', help_text='Labeling instructions in HTML format', null=True, verbose_name='expert instruction'),
+            field=models.TextField(
+                blank=True,
+                default='',
+                help_text='Labeling instructions in HTML format',
+                null=True,
+                verbose_name='expert instruction',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='is_draft',
-            field=models.BooleanField(default=False, help_text='Whether or not the project is in the middle of being created', verbose_name='is draft'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Whether or not the project is in the middle of being created',
+                verbose_name='is draft',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='is_published',
-            field=models.BooleanField(default=False, help_text='Whether or not the project is published to annotators', verbose_name='published'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Whether or not the project is published to annotators',
+                verbose_name='published',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='maximum_completions',
-            field=models.IntegerField(default=1, help_text='Maximum number of annotations for one task. If the number of annotations per task is equal or greater to this value, the task is completed (is_labeled=True)', verbose_name='maximum completion number'),
+            field=models.IntegerField(
+                default=1,
+                help_text='Maximum number of annotations for one task. If the number of annotations per task is equal or greater to this value, the task is completed (is_labeled=True)',
+                verbose_name='maximum completion number',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='min_completions_to_start_training',
-            field=models.IntegerField(default=10, help_text='Minimum number of completed tasks after which model training is started', verbose_name='min_completions_to_start_training'),
+            field=models.IntegerField(
+                default=10,
+                help_text='Minimum number of completed tasks after which model training is started',
+                verbose_name='min_completions_to_start_training',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='result_count',
-            field=models.IntegerField(default=0, help_text='Total results inside of annotations counter', verbose_name='result count'),
+            field=models.IntegerField(
+                default=0,
+                help_text='Total results inside of annotations counter',
+                verbose_name='result count',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='show_collab_predictions',
-            field=models.BooleanField(default=True, help_text='If set, the annotator can view model predictions', verbose_name='show predictions to annotator'),
+            field=models.BooleanField(
+                default=True,
+                help_text='If set, the annotator can view model predictions',
+                verbose_name='show predictions to annotator',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='show_completion_history',
-            field=models.BooleanField(default=False, help_text='Show annotation history to annotator', verbose_name='show annotation history'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Show annotation history to annotator',
+                verbose_name='show annotation history',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='show_instruction',
-            field=models.BooleanField(default=False, help_text='Show instructions to the annotator before they start', verbose_name='show instruction'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Show instructions to the annotator before they start',
+                verbose_name='show instruction',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='show_skip_button',
-            field=models.BooleanField(default=True, help_text='Show a skip button in interface and allow annotators to skip the task', verbose_name='show skip button'),
+            field=models.BooleanField(
+                default=True,
+                help_text='Show a skip button in interface and allow annotators to skip the task',
+                verbose_name='show skip button',
+            ),
         ),
         migrations.AlterField(
             model_name='project',
             name='title',
-            field=models.CharField(blank=True, default='', help_text='Project name. Must be between 3 to 50 characters long.', max_length=50, null=True, validators=[django.core.validators.MinLengthValidator(3), django.core.validators.MaxLengthValidator(50)], verbose_name='title'),
+            field=models.CharField(
+                blank=True,
+                default='',
+                help_text='Project name. Must be between 3 to 50 characters long.',
+                max_length=50,
+                null=True,
+                validators=[
+                    django.core.validators.MinLengthValidator(3),
+                    django.core.validators.MaxLengthValidator(50),
+                ],
+                verbose_name='title',
+            ),
         ),
         migrations.AlterField(
             model_name='projectsummary',
             name='common_data_columns',
-            field=models.JSONField(default=list, help_text='Common data columns found across imported tasks', null=True, verbose_name='common data columns'),
+            field=models.JSONField(
+                default=list,
+                help_text='Common data columns found across imported tasks',
+                null=True,
+                verbose_name='common data columns',
+            ),
         ),
         migrations.AlterField(
             model_name='projecttemplate',

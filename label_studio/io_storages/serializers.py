@@ -10,7 +10,9 @@ from tasks.models import Task
 
 
 class ImportStorageSerializer(serializers.ModelSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     class Meta:
         model = ImportStorage
@@ -18,7 +20,9 @@ class ImportStorageSerializer(serializers.ModelSerializer):
 
 
 class ExportStorageSerializer(serializers.ModelSerializer):
-    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(
+        default=os.path.basename(os.path.dirname(__file__))
+    )
 
     class Meta:
         model = ExportStorage
@@ -28,9 +32,7 @@ class ExportStorageSerializer(serializers.ModelSerializer):
 class StorageTaskSerializer(TaskSerializer):
     def __init__(self, *args, **kwargs):
         # task is nested into the annotation, we don't need annotations in the task again
-        kwargs['context'] = {
-            'resolve_uri': False
-        }
+        kwargs['context'] = {'resolve_uri': False}
         super().__init__(*args, **kwargs)
 
     class Meta:

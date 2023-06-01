@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projects', '0021_merge_20230215_1943'),
     ]
@@ -14,17 +13,61 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProjectImport',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('preannotated_from_fields', models.JSONField(blank=True, null=True)),
                 ('commit_to_project', models.BooleanField(default=False)),
                 ('return_task_ids', models.BooleanField(default=False)),
-                ('status', models.CharField(choices=[('created', 'Created'), ('in_progress', 'In progress'), ('failed', 'Failed'), ('completed', 'Completed')], default='created', max_length=64)),
+                (
+                    'status',
+                    models.CharField(
+                        choices=[
+                            ('created', 'Created'),
+                            ('in_progress', 'In progress'),
+                            ('failed', 'Failed'),
+                            ('completed', 'Completed'),
+                        ],
+                        default='created',
+                        max_length=64,
+                    ),
+                ),
                 ('url', models.CharField(blank=True, max_length=2048, null=True)),
                 ('traceback', models.TextField(blank=True, null=True)),
                 ('error', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Creation time', null=True, verbose_name='created at')),
-                ('updated_at', models.DateTimeField(auto_now_add=True, help_text='Updated time', null=True, verbose_name='updated at')),
-                ('finished_at', models.DateTimeField(default=None, help_text='Complete or fail time', null=True, verbose_name='finished at')),
+                (
+                    'created_at',
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text='Creation time',
+                        null=True,
+                        verbose_name='created at',
+                    ),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text='Updated time',
+                        null=True,
+                        verbose_name='updated at',
+                    ),
+                ),
+                (
+                    'finished_at',
+                    models.DateTimeField(
+                        default=None,
+                        help_text='Complete or fail time',
+                        null=True,
+                        verbose_name='finished at',
+                    ),
+                ),
                 ('task_count', models.IntegerField(default=0)),
                 ('annotation_count', models.IntegerField(default=0)),
                 ('prediction_count', models.IntegerField(default=0)),
@@ -35,7 +78,15 @@ class Migration(migrations.Migration):
                 ('data_columns', models.JSONField(default=list)),
                 ('tasks', models.JSONField(blank=True, null=True)),
                 ('task_ids', models.JSONField(default=list)),
-                ('project', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='imports', to='projects.project')),
+                (
+                    'project',
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='imports',
+                        to='projects.project',
+                    ),
+                ),
             ],
         ),
     ]

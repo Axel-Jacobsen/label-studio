@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('ml', '0005_auto_20211010_1344'),
     ]
@@ -13,6 +12,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='mlbackend',
             name='auto_update',
-            field=models.BooleanField(default=True, help_text='If false, model version is set by the user, if true - getting latest version from backend.', verbose_name='auto_update'),
+            field=models.BooleanField(
+                default=True,
+                help_text='If false, model version is set by the user, if true - getting latest version from backend.',
+                verbose_name='auto_update',
+            ),
         ),
     ]

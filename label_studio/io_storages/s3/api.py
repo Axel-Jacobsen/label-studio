@@ -5,7 +5,10 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi as openapi
 
 from io_storages.s3.models import S3ImportStorage, S3ExportStorage
-from io_storages.s3.serializers import S3ImportStorageSerializer, S3ExportStorageSerializer
+from io_storages.s3.serializers import (
+    S3ImportStorageSerializer,
+    S3ExportStorageSerializer,
+)
 from io_storages.api import (
     ImportStorageListAPI,
     ImportStorageDetailAPI,
@@ -39,7 +42,9 @@ from io_storages.api import (
 @method_decorator(
     name='post',
     decorator=swagger_auto_schema(
-        tags=['Storage:S3'], operation_summary='Create new storage', operation_description='Get new S3 import storage'
+        tags=['Storage:S3'],
+        operation_summary='Create new storage',
+        operation_description='Get new S3 import storage',
     ),
 )
 class S3ImportStorageListAPI(ImportStorageListAPI):

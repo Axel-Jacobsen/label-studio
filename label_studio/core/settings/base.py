@@ -85,7 +85,8 @@ HOSTNAME = get_env('HOST', '')
 if HOSTNAME:
     if not HOSTNAME.startswith('http://') and not HOSTNAME.startswith('https://'):
         logger.info(
-            "! HOST variable found in environment, but it must start with http:// or https://, ignore it: %s", HOSTNAME
+            "! HOST variable found in environment, but it must start with http:// or https://, ignore it: %s",
+            HOSTNAME,
         )
         HOSTNAME = ''
     else:
@@ -262,7 +263,10 @@ ALLOWED_HOSTS = ['*']
 
 # Auth modules
 AUTH_USER_MODEL = 'users.User'
-AUTHENTICATION_BACKENDS = ['rules.permissions.ObjectPermissionBackend', 'django.contrib.auth.backends.ModelBackend', ]
+AUTHENTICATION_BACKENDS = [
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 USE_USERNAME_FOR_LOGIN = False
 
 DISABLE_SIGNUP_WITHOUT_LINK = get_bool_env('DISABLE_SIGNUP_WITHOUT_LINK', False)
@@ -270,14 +274,18 @@ DISABLE_SIGNUP_WITHOUT_LINK = get_bool_env('DISABLE_SIGNUP_WITHOUT_LINK', False)
 # Password validation:
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
+    },
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Django templates
-TEMPLATES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'templates')  # ../../from_this = 'web' dir
+TEMPLATES_DIR = os.path.join(
+    os.path.dirname(BASE_DIR), 'templates'
+)  # ../../from_this = 'web' dir
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -331,18 +339,16 @@ SWAGGER_SETTINGS = {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header',
-            'description':
-                'The token (or API key) must be passed as a request header. '
-                'You can find your user token on the User Account page in Label Studio. Example: '
-                '<br><pre><code class="language-bash">'
-                'curl https://label-studio-host/api/projects -H "Authorization: Token [your-token]"'
-                '</code></pre>'
+            'description': 'The token (or API key) must be passed as a request header. '
+            'You can find your user token on the User Account page in Label Studio. Example: '
+            '<br><pre><code class="language-bash">'
+            'curl https://label-studio-host/api/projects -H "Authorization: Token [your-token]"'
+            '</code></pre>',
         }
     },
     'APIS_SORTER': 'alpha',
     'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
     'OPERATIONS_SORTER': 'alpha',
-
 }
 
 SENTRY_DSN = get_env('SENTRY_DSN', None)
@@ -389,11 +395,15 @@ CSRF_COOKIE_HTTPONLY = bool(int(get_env('CSRF_COOKIE_HTTPONLY', SESSION_COOKIE_S
 CSRF_COOKIE_SAMESITE = get_env('CSRF_COOKIE_SAMESITE', 'Lax')
 
 # Inactivity user sessions
-INACTIVITY_SESSION_TIMEOUT_ENABLED = bool(int(get_env('INACTIVITY_SESSION_TIMEOUT_ENABLED', True)))
+INACTIVITY_SESSION_TIMEOUT_ENABLED = bool(
+    int(get_env('INACTIVITY_SESSION_TIMEOUT_ENABLED', True))
+)
 # The most time a login will last, regardless of activity
 MAX_SESSION_AGE = int(get_env('MAX_SESSION_AGE', timedelta(days=14).total_seconds()))
 # The most time that can elapse between activity with the server before the user is logged out
-MAX_TIME_BETWEEN_ACTIVITY = int(get_env('MAX_TIME_BETWEEN_ACTIVITY', timedelta(days=5).total_seconds()))
+MAX_TIME_BETWEEN_ACTIVITY = int(
+    get_env('MAX_TIME_BETWEEN_ACTIVITY', timedelta(days=5).total_seconds())
+)
 
 SSRF_PROTECTION_ENABLED = get_bool_env('SSRF_PROTECTION_ENABLED', False)
 
@@ -442,7 +452,9 @@ DELAYED_EXPORT_DIR = 'export'
 os.makedirs(os.path.join(BASE_DATA_DIR, MEDIA_ROOT, DELAYED_EXPORT_DIR), exist_ok=True)
 
 # file / task size limits
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(get_env('DATA_UPLOAD_MAX_MEMORY_SIZE', 250 * 1024 * 1024))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(
+    get_env('DATA_UPLOAD_MAX_MEMORY_SIZE', 250 * 1024 * 1024)
+)
 TASKS_MAX_NUMBER = 1000000
 TASKS_MAX_FILE_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
 
@@ -460,11 +472,17 @@ EMAIL_BACKEND = get_env('EMAIL_BACKEND', 'django.core.mail.backends.dummy.EmailB
 
 ENABLE_LOCAL_FILES_STORAGE = get_bool_env('ENABLE_LOCAL_FILES_STORAGE', default=True)
 LOCAL_FILES_SERVING_ENABLED = get_bool_env('LOCAL_FILES_SERVING_ENABLED', default=False)
-LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
+LOCAL_FILES_DOCUMENT_ROOT = get_env(
+    'LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep)
+)
 
-SYNC_ON_TARGET_STORAGE_CREATION = get_bool_env('SYNC_ON_TARGET_STORAGE_CREATION', default=True)
+SYNC_ON_TARGET_STORAGE_CREATION = get_bool_env(
+    'SYNC_ON_TARGET_STORAGE_CREATION', default=True
+)
 
-ALLOW_IMPORT_TASKS_WITH_UNKNOWN_EMAILS = get_bool_env('ALLOW_IMPORT_TASKS_WITH_UNKNOWN_EMAILS', default=False)
+ALLOW_IMPORT_TASKS_WITH_UNKNOWN_EMAILS = get_bool_env(
+    'ALLOW_IMPORT_TASKS_WITH_UNKNOWN_EMAILS', default=False
+)
 
 """ React Libraries: do not forget to change this dir in /etc/nginx/nginx.conf """
 # EDITOR = label-studio-frontend repository
@@ -490,7 +508,9 @@ VERSIONS_CHECK_TIME = 0
 ALLOW_ORGANIZATION_WEBHOOKS = get_bool_env('ALLOW_ORGANIZATION_WEBHOOKS', False)
 CONVERTER_DOWNLOAD_RESOURCES = get_bool_env('CONVERTER_DOWNLOAD_RESOURCES', True)
 EXPERIMENTAL_FEATURES = get_bool_env('EXPERIMENTAL_FEATURES', False)
-USE_ENFORCE_CSRF_CHECKS = get_bool_env('USE_ENFORCE_CSRF_CHECKS', True)  # False is for tests
+USE_ENFORCE_CSRF_CHECKS = get_bool_env(
+    'USE_ENFORCE_CSRF_CHECKS', True
+)  # False is for tests
 CLOUD_FILE_STORAGE_ENABLED = False
 
 IO_STORAGES_IMPORT_LINK_NAMES = [
@@ -509,7 +529,9 @@ EXPORT_DATA_SERIALIZER = 'data_export.serializers.BaseExportDataSerializer'
 DATA_MANAGER_GET_ALL_COLUMNS = 'data_manager.functions.get_all_columns'
 DATA_MANAGER_ANNOTATIONS_MAP = {}
 DATA_MANAGER_ACTIONS = {}
-DATA_MANAGER_CUSTOM_FILTER_EXPRESSIONS = 'data_manager.functions.custom_filter_expressions'
+DATA_MANAGER_CUSTOM_FILTER_EXPRESSIONS = (
+    'data_manager.functions.custom_filter_expressions'
+)
 DATA_MANAGER_PREPROCESS_FILTER = 'data_manager.functions.preprocess_filter'
 USER_LOGIN_FORM = 'users.forms.LoginForm'
 PROJECT_MIXIN = 'projects.mixins.ProjectMixin'
@@ -521,7 +543,9 @@ GET_STORAGE_LIST = 'io_storages.functions.get_storage_list'
 STORAGE_ANNOTATION_SERIALIZER = 'io_storages.serializers.StorageAnnotationSerializer'
 TASK_SERIALIZER_BULK = 'tasks.serializers.BaseTaskSerializerBulk'
 PREPROCESS_FIELD_NAME = 'data_manager.functions.preprocess_field_name'
-INTERACTIVE_DATA_SERIALIZER = 'data_export.serializers.BaseExportDataSerializerForInteractive'
+INTERACTIVE_DATA_SERIALIZER = (
+    'data_export.serializers.BaseExportDataSerializerForInteractive'
+)
 DELETE_TASKS_ANNOTATIONS_POSTPROCESS = None
 
 
@@ -586,7 +610,9 @@ APP_WEBSERVER = get_env('APP_WEBSERVER', 'django')
 BATCH_JOB_RETRY_TIMEOUT = int(get_env('BATCH_JOB_RETRY_TIMEOUT', 60))
 
 FUTURE_SAVE_TASK_TO_STORAGE = get_bool_env('FUTURE_SAVE_TASK_TO_STORAGE', default=False)
-FUTURE_SAVE_TASK_TO_STORAGE_JSON_EXT = get_bool_env('FUTURE_SAVE_TASK_TO_STORAGE_JSON_EXT', default=True)
+FUTURE_SAVE_TASK_TO_STORAGE_JSON_EXT = get_bool_env(
+    'FUTURE_SAVE_TASK_TO_STORAGE_JSON_EXT', default=True
+)
 STORAGE_IN_PROGRESS_TIMER = get_env('STORAGE_IN_PROGRESS_TIMER', 5.0)
 
 USE_NGINX_FOR_EXPORT_DOWNLOADS = get_bool_env('USE_NGINX_FOR_EXPORT_DOWNLOADS', False)
@@ -602,7 +628,9 @@ if get_env('MINIO_STORAGE_ENDPOINT') and not get_bool_env('MINIO_SKIP', False):
     # make domain for FileUpload.file
     AWS_S3_SECURE_URLS = False
     AWS_S3_URL_PROTOCOL = 'http:' if HOSTNAME.startswith('http://') else 'https:'
-    AWS_S3_CUSTOM_DOMAIN = HOSTNAME.replace('http://', '').replace('https://', '') + '/data'
+    AWS_S3_CUSTOM_DOMAIN = (
+        HOSTNAME.replace('http://', '').replace('https://', '') + '/data'
+    )
 
 if get_env('STORAGE_TYPE') == "s3":
     CLOUD_FILE_STORAGE_ENABLED = True
@@ -627,7 +655,9 @@ if get_env('STORAGE_TYPE') == "azure":
     AZURE_ACCOUNT_NAME = get_env('STORAGE_AZURE_ACCOUNT_NAME')
     AZURE_ACCOUNT_KEY = get_env('STORAGE_AZURE_ACCOUNT_KEY')
     AZURE_CONTAINER = get_env('STORAGE_AZURE_CONTAINER_NAME')
-    AZURE_URL_EXPIRATION_SECS = int(get_env('STORAGE_AZURE_URL_EXPIRATION_SECS', '86400'))
+    AZURE_URL_EXPIRATION_SECS = int(
+        get_env('STORAGE_AZURE_URL_EXPIRATION_SECS', '86400')
+    )
     AZURE_LOCATION = get_env('STORAGE_AZURE_FOLDER', default='')
 
 if get_env('STORAGE_TYPE') == "gcs":
@@ -636,7 +666,9 @@ if get_env('STORAGE_TYPE') == "gcs":
     DEFAULT_FILE_STORAGE = 'core.storage.AlternativeGoogleCloudStorage'
     GS_PROJECT_ID = get_env('STORAGE_GCS_PROJECT_ID')
     GS_BUCKET_NAME = get_env('STORAGE_GCS_BUCKET_NAME')
-    GS_EXPIRATION = timedelta(seconds=int(get_env('STORAGE_GCS_EXPIRATION_SECS', '86400')))
+    GS_EXPIRATION = timedelta(
+        seconds=int(get_env('STORAGE_GCS_EXPIRATION_SECS', '86400'))
+    )
     GS_LOCATION = get_env('STORAGE_GCS_FOLDER', default='')
     GS_CUSTOM_ENDPOINT = get_env('STORAGE_GCS_ENDPOINT')
 
@@ -644,5 +676,9 @@ CSRF_TRUSTED_ORIGINS = get_env('CSRF_TRUSTED_ORIGINS', [])
 if CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS.split(",")
 
-REAL_HOSTNAME = os.getenv('HOSTNAME')  # we have to use getenv, because we don't use LABEL_STUDIO_ prefix
-GCS_CLOUD_STORAGE_FORCE_DEFAULT_CREDENTIALS = get_bool_env('GCS_CLOUD_STORAGE_FORCE_DEFAULT_CREDENTIALS', False)
+REAL_HOSTNAME = os.getenv(
+    'HOSTNAME'
+)  # we have to use getenv, because we don't use LABEL_STUDIO_ prefix
+GCS_CLOUD_STORAGE_FORCE_DEFAULT_CREDENTIALS = get_bool_env(
+    'GCS_CLOUD_STORAGE_FORCE_DEFAULT_CREDENTIALS', False
+)

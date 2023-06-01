@@ -7,7 +7,18 @@ import logging
 from pydantic import BaseModel
 
 from django.db import models
-from django.db.models import Aggregate, OuterRef, Subquery, Avg, Q, F, Value, Exists, When, Case
+from django.db.models import (
+    Aggregate,
+    OuterRef,
+    Subquery,
+    Avg,
+    Q,
+    F,
+    Value,
+    Exists,
+    When,
+    Case,
+)
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models.functions import Coalesce
@@ -59,7 +70,7 @@ operators = {
     Operator.EMPTY: "__isnull",
     Operator.CONTAINS: "__icontains",
     Operator.NOT_CONTAINS: "__icontains",
-    Operator.REGEX: "__regex"
+    Operator.REGEX: "__regex",
 }
 
 
@@ -70,7 +81,9 @@ def get_fields_for_filter_ordering(prepare_params):
 
     # collect fields from ordering
     if prepare_params.ordering:
-        ordering_field_name = prepare_params.ordering[0].replace("tasks:", "").replace("-", "")
+        ordering_field_name = (
+            prepare_params.ordering[0].replace("tasks:", "").replace("-", "")
+        )
         result.append(ordering_field_name)
 
     # collect fields from filters
@@ -82,7 +95,7 @@ def get_fields_for_filter_ordering(prepare_params):
 
 
 def get_fields_for_evaluation(prepare_params, user):
-    """ Collecting field names to annotate them
+    """Collecting field names to annotate them
 
     :param prepare_params: structure with filters and ordering
     :param user: user
@@ -98,13 +111,20 @@ def get_fields_for_evaluation(prepare_params, user):
     fields = prepare_params.data.get('hiddenColumns', None)
     if fields:
         from label_studio.data_manager.functions import TASKS
+
         GET_ALL_COLUMNS = load_func(settings.DATA_MANAGER_GET_ALL_COLUMNS)
-        all_columns = GET_ALL_COLUMNS(Project.objects.get(id=prepare_params.project), user)
-        all_columns = set([TASKS + ('data.' if c.get('parent', None) == 'data' else '') + c['id']
-                           for c in all_columns['columns']])
+        all_columns = GET_ALL_COLUMNS(
+            Project.objects.get(id=prepare_params.project), user
+        )
+        all_columns = set(
+            [
+                TASKS + ('data.' if c.get('parent', None) == 'data' else '') + c['id']
+                for c in all_columns['columns']
+            ]
+        )
         hidden = set(fields['explore']) & set(fields['labeling'])
         shown = all_columns - hidden
-        shown = {c[len(TASKS):] for c in shown} - {'data'}  # remove tasks:
+        shown = {c[len(TASKS) :] for c in shown} - {'data'}  # remove tasks:
         result = set(result) | shown
 
     # remove duplicates
@@ -122,16 +142,28 @@ def get_fields_for_evaluation(prepare_params, user):
 def apply_ordering(queryset, ordering, project, request):
     if ordering:
         preprocess_field_name = load_func(settings.PREPROCESS_FIELD_NAME)
-        field_name, ascending = preprocess_field_name(ordering[0], only_undefined_field=project.only_undefined_field)
+        field_name, ascending = preprocess_field_name(
+            ordering[0], only_undefined_field=project.only_undefined_field
+        )
 
         if field_name.startswith('data__'):
             # annotate task with data field for float/int/bool ordering support
             json_field = field_name.replace('data__', '')
-            queryset = queryset.annotate(ordering_field=KeyTextTransform(json_field, 'data'))
-            f = F('ordering_field').asc(nulls_last=True) if ascending else F('ordering_field').desc(nulls_last=True)
+            queryset = queryset.annotate(
+                ordering_field=KeyTextTransform(json_field, 'data')
+            )
+            f = (
+                F('ordering_field').asc(nulls_last=True)
+                if ascending
+                else F('ordering_field').desc(nulls_last=True)
+            )
 
         else:
-            f = F(field_name).asc(nulls_last=True) if ascending else F(field_name).desc(nulls_last=True)
+            f = (
+                F(field_name).asc(nulls_last=True)
+                if ascending
+                else F(field_name).desc(nulls_last=True)
+            )
 
         queryset = queryset.order_by(f)
     else:
@@ -167,18 +199,19 @@ def add_result_filter(field_name, _filter, filter_expressions, project):
 
     # Annotation
     if field_name == 'annotations_results':
-        subquery = Q(id__in=
-            Annotation.objects
-                .annotate(json_str=RawSQL('cast(result as text)', ''))
-                .filter(Q(project=project) & Q(json_str__contains=_filter.value))
-                .values_list('task', flat=True)
+        subquery = Q(
+            id__in=Annotation.objects.annotate(
+                json_str=RawSQL('cast(result as text)', '')
+            )
+            .filter(Q(project=project) & Q(json_str__contains=_filter.value))
+            .values_list('task', flat=True)
         )
     # Predictions: they don't have `project` yet
     else:
         subquery = Exists(
-            _class.objects
-            .annotate(json_str=RawSQL('cast(result as text)', ''))
-            .filter(Q(task=OuterRef('pk')) & Q(json_str__contains=_filter.value))
+            _class.objects.annotate(json_str=RawSQL('cast(result as text)', '')).filter(
+                Q(task=OuterRef('pk')) & Q(json_str__contains=_filter.value)
+            )
         )
 
     if _filter.operator in [Operator.EQUAL, Operator.NOT_EQUAL]:
@@ -204,6 +237,7 @@ def add_result_filter(field_name, _filter, filter_expressions, project):
         filter_expressions.append(q)
         return 'continue'
 
+
 def add_user_filter(enabled, key, _filter, filter_expressions):
     if enabled and _filter.operator == Operator.CONTAINS:
         filter_expressions.append(Q(**{key: int(_filter.value)}))
@@ -213,7 +247,7 @@ def add_user_filter(enabled, key, _filter, filter_expressions):
         return 'continue'
     elif enabled and _filter.operator == Operator.EMPTY:
         value = cast_bool_from_str(_filter.value)
-        filter_expressions.append(Q(**{key+'__isnull': value}))
+        filter_expressions.append(Q(**{key + '__isnull': value}))
         return 'continue'
 
 
@@ -223,35 +257,47 @@ def apply_filters(queryset, filters, project, request):
 
     # convert conjunction to orm statement
     filter_expressions = []
-    custom_filter_expressions = load_func(settings.DATA_MANAGER_CUSTOM_FILTER_EXPRESSIONS)
+    custom_filter_expressions = load_func(
+        settings.DATA_MANAGER_CUSTOM_FILTER_EXPRESSIONS
+    )
 
     for _filter in filters.items:
-
         # we can also have annotations filters
         if not _filter.filter.startswith("filter:tasks:") or _filter.value is None:
             continue
 
         # django orm loop expression attached to column name
         preprocess_field_name = load_func(settings.PREPROCESS_FIELD_NAME)
-        field_name, _ = preprocess_field_name(_filter.filter, project.only_undefined_field)
+        field_name, _ = preprocess_field_name(
+            _filter.filter, project.only_undefined_field
+        )
 
         # filter pre-processing, value type conversion, etc..
         preprocess_filter = load_func(settings.DATA_MANAGER_PREPROCESS_FILTER)
         _filter = preprocess_filter(_filter, field_name)
 
         # custom expressions for enterprise
-        filter_expression = custom_filter_expressions(_filter, field_name, project, request=request)
+        filter_expression = custom_filter_expressions(
+            _filter, field_name, project, request=request
+        )
         if filter_expression:
             filter_expressions.append(filter_expression)
             continue
 
         # annotators
-        result = add_user_filter(field_name == 'annotators', 'annotations__completed_by', _filter, filter_expressions)
+        result = add_user_filter(
+            field_name == 'annotators',
+            'annotations__completed_by',
+            _filter,
+            filter_expressions,
+        )
         if result == 'continue':
             continue
 
         # updated_by
-        result = add_user_filter(field_name == 'updated_by', 'updated_by', _filter, filter_expressions)
+        result = add_user_filter(
+            field_name == 'updated_by', 'updated_by', _filter, filter_expressions
+        )
         if result == 'continue':
             continue
 
@@ -268,28 +314,41 @@ def apply_filters(queryset, filters, project, request):
             field_name = 'annotations__id'
             if 'contains' in _filter.operator:
                 # convert string like "1 2,3" => [1,2,3]
-                _filter.value = [int(value)
-                                 for value in re.split(',|;| ', _filter.value)
-                                 if value and value.isdigit()]
-                _filter.operator = 'in_list' if _filter.operator == 'contains' else 'not_in_list'
+                _filter.value = [
+                    int(value)
+                    for value in re.split(',|;| ', _filter.value)
+                    if value and value.isdigit()
+                ]
+                _filter.operator = (
+                    'in_list' if _filter.operator == 'contains' else 'not_in_list'
+                )
             elif 'equal' in _filter.operator:
                 if not _filter.value.isdigit():
                     _filter.value = 0
 
         # predictions model versions
-        if field_name == 'predictions_model_versions' and _filter.operator == Operator.CONTAINS:
+        if (
+            field_name == 'predictions_model_versions'
+            and _filter.operator == Operator.CONTAINS
+        ):
             q = Q()
             for value in _filter.value:
                 q |= Q(predictions__model_version__contains=value)
             filter_expressions.append(q)
             continue
-        elif field_name == 'predictions_model_versions' and _filter.operator == Operator.NOT_CONTAINS:
+        elif (
+            field_name == 'predictions_model_versions'
+            and _filter.operator == Operator.NOT_CONTAINS
+        ):
             q = Q()
             for value in _filter.value:
                 q &= ~Q(predictions__model_version__contains=value)
             filter_expressions.append(q)
             continue
-        elif field_name == 'predictions_model_versions' and _filter.operator == Operator.EMPTY:
+        elif (
+            field_name == 'predictions_model_versions'
+            and _filter.operator == Operator.EMPTY
+        ):
             value = cast_bool_from_str(_filter.value)
             filter_expressions.append(Q(predictions__model_version__isnull=value))
             continue
@@ -301,18 +360,28 @@ def apply_filters(queryset, filters, project, request):
         # annotate with cast to number if need
         if _filter.type == 'Number' and field_name.startswith('data__'):
             json_field = field_name.replace('data__', '')
-            queryset = queryset.annotate(**{
-                f'filter_{json_field.replace("$undefined$", "undefined")}':
-                    Cast(KeyTextTransform(json_field, 'data'), output_field=FloatField())
-            })
-            clean_field_name = f'filter_{json_field.replace("$undefined$", "undefined")}'
+            queryset = queryset.annotate(
+                **{
+                    f'filter_{json_field.replace("$undefined$", "undefined")}': Cast(
+                        KeyTextTransform(json_field, 'data'), output_field=FloatField()
+                    )
+                }
+            )
+            clean_field_name = (
+                f'filter_{json_field.replace("$undefined$", "undefined")}'
+            )
         else:
             clean_field_name = field_name
 
         # special case: predictions, annotations, cancelled --- for them 0 is equal to is_empty=True
-        if clean_field_name in ('total_predictions', 'total_annotations', 'cancelled_annotations') and \
-                _filter.operator == 'empty':
-            _filter.operator = 'equal' if cast_bool_from_str(_filter.value) else 'not_equal'
+        if (
+            clean_field_name
+            in ('total_predictions', 'total_annotations', 'cancelled_annotations')
+            and _filter.operator == 'empty'
+        ):
+            _filter.operator = (
+                'equal' if cast_bool_from_str(_filter.value) else 'not_equal'
+            )
             _filter.value = 0
 
         # get type of annotated field
@@ -320,25 +389,23 @@ def apply_filters(queryset, filters, project, request):
         if queryset.exists():
             value_type = type(queryset.values_list(field_name, flat=True)[0]).__name__
 
-        if (value_type == 'list' or value_type == 'tuple') and 'equal' in _filter.operator:
+        if (
+            value_type == 'list' or value_type == 'tuple'
+        ) and 'equal' in _filter.operator:
             raise Exception('Not supported filter type')
 
         # special case: for strings empty is "" or null=True
         if _filter.type in ('String', 'Unknown') and _filter.operator == 'empty':
             value = cast_bool_from_str(_filter.value)
             if value:  # empty = true
-                q = Q(
-                    Q(**{field_name: None}) | Q(**{field_name+'__isnull': True})
-                )
+                q = Q(Q(**{field_name: None}) | Q(**{field_name + '__isnull': True}))
                 if value_type == 'str':
                     q |= Q(**{field_name: ''})
                 if value_type == 'list':
                     q = Q(**{field_name: [None]})
 
             else:  # empty = false
-                q = Q(
-                    ~Q(**{field_name: None}) & ~Q(**{field_name+'__isnull': True})
-                )
+                q = Q(~Q(**{field_name: None}) & ~Q(**{field_name + '__isnull': True}))
                 if value_type == 'str':
                     q &= ~Q(**{field_name: ''})
                 if value_type == 'list':
@@ -368,7 +435,6 @@ def apply_filters(queryset, filters, project, request):
                         f"{field_name}__lte": _filter.value.max,
                     }
                 ),
-
             )
 
         # not in
@@ -381,21 +447,18 @@ def apply_filters(queryset, filters, project, request):
                         f"{field_name}__lte": _filter.value.max,
                     }
                 ),
-
             )
 
         # in list
         elif _filter.operator == "in_list":
             filter_expressions.append(
                 Q(**{f"{field_name}__in": _filter.value}),
-
             )
 
         # not in list
         elif _filter.operator == "not_in_list":
             filter_expressions.append(
                 ~Q(**{f"{field_name}__in": _filter.value}),
-
             )
 
         # empty
@@ -429,7 +492,7 @@ def apply_filters(queryset, filters, project, request):
 
 class TaskQuerySet(models.QuerySet):
     def prepared(self, prepare_params=None):
-        """ Apply filters, ordering and selected items to queryset
+        """Apply filters, ordering and selected items to queryset
 
         :param prepare_params: prepare params with project, filters, orderings, etc
         :return: ordered and filtered queryset
@@ -450,11 +513,17 @@ class TaskQuerySet(models.QuerySet):
             return queryset
 
         # included selected items
-        if prepare_params.selectedItems.all is False and prepare_params.selectedItems.included:
+        if (
+            prepare_params.selectedItems.all is False
+            and prepare_params.selectedItems.included
+        ):
             queryset = queryset.filter(id__in=prepare_params.selectedItems.included)
 
         # excluded selected items
-        elif prepare_params.selectedItems.all is True and prepare_params.selectedItems.excluded:
+        elif (
+            prepare_params.selectedItems.all is True
+            and prepare_params.selectedItems.excluded
+        ):
             queryset = queryset.exclude(id__in=prepare_params.selectedItems.excluded)
 
         return queryset
@@ -467,7 +536,10 @@ class GroupConcat(Aggregate):
     def __init__(self, expression, distinct=False, output_field=None, **extra):
         output_field = models.JSONField() if output_field is None else output_field
         super().__init__(
-            expression, distinct="DISTINCT " if distinct else "", output_field=output_field, **extra
+            expression,
+            distinct="DISTINCT " if distinct else "",
+            output_field=output_field,
+            **extra,
         )
 
 
@@ -481,28 +553,50 @@ def annotate_completed_at(queryset):
         )
     )
 
+
 def annotate_annotations_results(queryset):
     if settings.DJANGO_DB == settings.DJANGO_DB_SQLITE:
-        return queryset.annotate(annotations_results=Coalesce(
-            GroupConcat("annotations__result"), Value(''), output_field=models.CharField()))
+        return queryset.annotate(
+            annotations_results=Coalesce(
+                GroupConcat("annotations__result"),
+                Value(''),
+                output_field=models.CharField(),
+            )
+        )
     else:
-        return queryset.annotate(annotations_results=ArrayAgg("annotations__result", distinct=True))
+        return queryset.annotate(
+            annotations_results=ArrayAgg("annotations__result", distinct=True)
+        )
 
 
 def annotate_predictions_results(queryset):
     if settings.DJANGO_DB == settings.DJANGO_DB_SQLITE:
-        return queryset.annotate(predictions_results=Coalesce(
-            GroupConcat("predictions__result"), Value(''), output_field=models.CharField()))
+        return queryset.annotate(
+            predictions_results=Coalesce(
+                GroupConcat("predictions__result"),
+                Value(''),
+                output_field=models.CharField(),
+            )
+        )
     else:
-        return queryset.annotate(predictions_results=ArrayAgg("predictions__result", distinct=True))
+        return queryset.annotate(
+            predictions_results=ArrayAgg("predictions__result", distinct=True)
+        )
 
 
 def annotate_annotators(queryset):
     if settings.DJANGO_DB == settings.DJANGO_DB_SQLITE:
-        return queryset.annotate(annotators=Coalesce(
-            GroupConcat("annotations__completed_by"), Value(''), output_field=models.CharField()))
+        return queryset.annotate(
+            annotators=Coalesce(
+                GroupConcat("annotations__completed_by"),
+                Value(''),
+                output_field=models.CharField(),
+            )
+        )
     else:
-        return queryset.annotate(annotators=ArrayAgg("annotations__completed_by", distinct=True))
+        return queryset.annotate(
+            annotators=ArrayAgg("annotations__completed_by", distinct=True)
+        )
 
 
 def annotate_predictions_score(queryset):
@@ -511,39 +605,60 @@ def annotate_predictions_score(queryset):
         return queryset
 
     # new approach with each ML backend contains it's version
-    if flag_set('ff_front_dev_1682_model_version_dropdown_070622_short', first_task.project.organization.created_by):
-        model_versions = list(first_task.project.ml_backends.filter(project=first_task.project).
-                              values_list("model_version", flat=True))
+    if flag_set(
+        'ff_front_dev_1682_model_version_dropdown_070622_short',
+        first_task.project.organization.created_by,
+    ):
+        model_versions = list(
+            first_task.project.ml_backends.filter(
+                project=first_task.project
+            ).values_list("model_version", flat=True)
+        )
         if len(model_versions) == 0:
             return queryset.annotate(predictions_score=Avg("predictions__score"))
 
         else:
-            return queryset.annotate(predictions_score=Avg(
-                "predictions__score", filter=Q(predictions__model_version__in=model_versions)
-            ))
+            return queryset.annotate(
+                predictions_score=Avg(
+                    "predictions__score",
+                    filter=Q(predictions__model_version__in=model_versions),
+                )
+            )
     else:
         model_version = first_task.project.model_version
         if model_version is None:
             return queryset.annotate(predictions_score=Avg("predictions__score"))
         else:
-            return queryset.annotate(predictions_score=Avg(
-                "predictions__score", filter=Q(predictions__model_version=model_version)
-            ))
+            return queryset.annotate(
+                predictions_score=Avg(
+                    "predictions__score",
+                    filter=Q(predictions__model_version=model_version),
+                )
+            )
 
 
 def annotate_annotations_ids(queryset):
     if settings.DJANGO_DB == settings.DJANGO_DB_SQLITE:
-        return queryset.annotate(annotations_ids=GroupConcat('annotations__id', output_field=models.CharField()))
+        return queryset.annotate(
+            annotations_ids=GroupConcat(
+                'annotations__id', output_field=models.CharField()
+            )
+        )
     else:
         return queryset.annotate(annotations_ids=ArrayAgg('annotations__id'))
 
 
 def annotate_predictions_model_versions(queryset):
     if settings.DJANGO_DB == settings.DJANGO_DB_SQLITE:
-        return queryset.annotate(predictions_model_versions=GroupConcat('predictions__model_version',
-                                                                        output_field=models.CharField()))
+        return queryset.annotate(
+            predictions_model_versions=GroupConcat(
+                'predictions__model_version', output_field=models.CharField()
+            )
+        )
     else:
-        return queryset.annotate(predictions_model_versions=ArrayAgg('predictions__model_version'))
+        return queryset.annotate(
+            predictions_model_versions=ArrayAgg('predictions__model_version')
+        )
 
 
 def annotate_avg_lead_time(queryset):
@@ -581,7 +696,9 @@ def update_annotation_map(obj):
 
 class PreparedTaskManager(models.Manager):
     @staticmethod
-    def annotate_queryset(queryset, fields_for_evaluation=None, all_fields=False, request=None):
+    def annotate_queryset(
+        queryset, fields_for_evaluation=None, all_fields=False, request=None
+    ):
         annotations_map = get_annotations_map()
 
         if fields_for_evaluation is None:
@@ -600,7 +717,9 @@ class PreparedTaskManager(models.Manager):
 
         return queryset
 
-    def get_queryset(self, fields_for_evaluation=None, prepare_params=None, all_fields=False):
+    def get_queryset(
+        self, fields_for_evaluation=None, prepare_params=None, all_fields=False
+    ):
         """
         :param fields_for_evaluation: list of annotated fields in task
         :param prepare_params: filters, ordering, selected items
@@ -613,14 +732,16 @@ class PreparedTaskManager(models.Manager):
             queryset,
             fields_for_evaluation=fields_for_evaluation,
             all_fields=all_fields,
-            request=prepare_params.request
+            request=prepare_params.request,
         )
 
     def only_filtered(self, prepare_params=None):
         request = prepare_params.request
         queryset = TaskQuerySet(self.model).filter(project=prepare_params.project)
         fields_for_filter_ordering = get_fields_for_filter_ordering(prepare_params)
-        queryset = self.annotate_queryset(queryset, fields_for_evaluation=fields_for_filter_ordering, request=request)
+        queryset = self.annotate_queryset(
+            queryset, fields_for_evaluation=fields_for_filter_ordering, request=request
+        )
         return queryset.prepared(prepare_params=prepare_params)
 
 

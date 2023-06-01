@@ -8,30 +8,33 @@ from locust import HttpUser, TaskSet, task, between
 
 
 class UserWorksWithProject(TaskSet):
-
     def on_start(self):
         # user creates the new project
         title = str(uuid4())
-        payload = json.dumps({
-            'title': title,
-            'is_published': True,
-            'skip_onboarding': True,
-            'label_config': "<View><Text name=\"my_text\" value=\"$text\"/><Choices name=\"my_class\" toName=\"my_text\"><Choice value=\"pos\"/><Choice value=\"neg\"/></Choices></View>"
-        })
+        payload = json.dumps(
+            {
+                'title': title,
+                'is_published': True,
+                'skip_onboarding': True,
+                'label_config': "<View><Text name=\"my_text\" value=\"$text\"/><Choices name=\"my_class\" toName=\"my_text\"><Choice value=\"pos\"/><Choice value=\"neg\"/></Choices></View>",
+            }
+        )
         with self.client.post(
             '/api/projects',
             data=payload,
             headers={
                 'content-type': 'application/json',
-                'Authorization': f'Token {self.client.token}'
+                'Authorization': f'Token {self.client.token}',
             },
-            catch_response=True
+            catch_response=True,
         ) as r:
             if r.status_code != 201:
                 r.failure(r.status_code)
             else:
                 self.project_id = r.json()['id']
-                print(f'Project {self.project_id} has been created by user {self.client.name}')
+                print(
+                    f'Project {self.project_id} has been created by user {self.client.name}'
+                )
 
     @task(5)
     def project_list(self):
@@ -43,19 +46,28 @@ class UserWorksWithProject(TaskSet):
 
     @task(5)
     def project_data(self):
-        self.client.get('/projects/%i/data' % self.project_id, name='/projects/<id>/data')
+        self.client.get(
+            '/projects/%i/data' % self.project_id, name='/projects/<id>/data'
+        )
 
     @task(20)
     def label_stream(self):
-        self.client.get('/projects/%i/label-stream' % self.project_id, name='/projects/<id>/label-stream')
+        self.client.get(
+            '/projects/%i/label-stream' % self.project_id,
+            name='/projects/<id>/label-stream',
+        )
 
     @task(5)
     def expert_page(self):
-        self.client.get('/projects/%i/experts' % self.project_id, name='/projects/<id>/experts')
+        self.client.get(
+            '/projects/%i/experts' % self.project_id, name='/projects/<id>/experts'
+        )
 
     @task(5)
     def expert_page(self):
-        self.client.get('/projects/%i/experts' % self.project_id, name='/projects/<id>/experts')
+        self.client.get(
+            '/projects/%i/experts' % self.project_id, name='/projects/<id>/experts'
+        )
 
     @task(5)
     def stats(self):
@@ -63,7 +75,9 @@ class UserWorksWithProject(TaskSet):
 
     @task(5)
     def project_stats(self):
-        self.client.get('/projects/%i/plots' % self.project_id, name='/projects/<id>/plots')
+        self.client.get(
+            '/projects/%i/plots' % self.project_id, name='/projects/<id>/plots'
+        )
 
     @task(5)
     def experts(self):
@@ -71,19 +85,52 @@ class UserWorksWithProject(TaskSet):
 
     @task(5)
     def import_tasks(self):
-        payload = json.dumps([{"text": "example positive review"}, {"text": "example negative review"}])
-        headers = {'content-type': 'application/json', 'Authorization': f'Token {self.client.token}'}
-        self.client.post('/api/projects/%i/tasks/bulk' % self.project_id, payload, headers=headers, name='/api/projects/<id>/tasks/bulk')
+        payload = json.dumps(
+            [{"text": "example positive review"}, {"text": "example negative review"}]
+        )
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': f'Token {self.client.token}',
+        }
+        self.client.post(
+            '/api/projects/%i/tasks/bulk' % self.project_id,
+            payload,
+            headers=headers,
+            name='/api/projects/<id>/tasks/bulk',
+        )
 
     @task(20)
     def complete_task_via_api(self):
-        r = self.client.get('/api/projects/%i/tasks' % self.project_id, headers={'Authorization': f'Token {self.client.token}'}, name='/api/projects/<id>/tasks')
+        r = self.client.get(
+            '/api/projects/%i/tasks' % self.project_id,
+            headers={'Authorization': f'Token {self.client.token}'},
+            name='/api/projects/<id>/tasks',
+        )
         tasks_list = r.json()
         if len(tasks_list):
             any_task = random.choice(tasks_list)
-            payload = json.dumps({"result": [{"type": "choices", "from_name": "my_class", "to_name": "my_text", "value": {"choices": [random.choice(['pos', 'neg'])]}}]})
-            headers = {'content-type': 'application/json', 'Authorization': f'Token {self.client.token}'}
-            self.client.post('/api/tasks/%i/annotations' % any_task["id"], payload, headers=headers, name='/api/tasks/<id>/annotations')
+            payload = json.dumps(
+                {
+                    "result": [
+                        {
+                            "type": "choices",
+                            "from_name": "my_class",
+                            "to_name": "my_text",
+                            "value": {"choices": [random.choice(['pos', 'neg'])]},
+                        }
+                    ]
+                }
+            )
+            headers = {
+                'content-type': 'application/json',
+                'Authorization': f'Token {self.client.token}',
+            }
+            self.client.post(
+                '/api/tasks/%i/annotations' % any_task["id"],
+                payload,
+                headers=headers,
+                name='/api/tasks/<id>/annotations',
+            )
 
     @task(1)
     def stop(self):
@@ -104,9 +151,11 @@ class WebsiteUser(HttpUser):
         payload = {
             'email': f'{username}@loadtest.me',
             'password': '12345678',
-            'title': username.upper()
+            'title': username.upper(),
         }
-        r = self.client.post('/user/signup', payload, headers={'X-CSRFToken': csrftoken})
+        r = self.client.post(
+            '/user/signup', payload, headers={'X-CSRFToken': csrftoken}
+        )
         response = self.client.get('/api/current-user/token').json()
         self.client.token = response['detail']
         self.client.name = username

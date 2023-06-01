@@ -60,10 +60,12 @@ class ExportMixin:
         if 'view' in task_filter_options:
             try:
                 value = int(task_filter_options['view'])
-                prepare_params = View.objects.get(project=self.project, id=value).get_prepare_tasks_params(
-                    add_selected_items=True
-                )
-                tab_tasks = Task.prepared.only_filtered(prepare_params=prepare_params).values_list('id', flat=True)
+                prepare_params = View.objects.get(
+                    project=self.project, id=value
+                ).get_prepare_tasks_params(add_selected_items=True)
+                tab_tasks = Task.prepared.only_filtered(
+                    prepare_params=prepare_params
+                ).values_list('id', flat=True)
                 tasks = tasks.filter(id__in=tab_tasks)
             except (ValueError, View.DoesNotExist) as exc:
                 logger.warning(f'Incorrect view params {exc}')
@@ -132,29 +134,43 @@ class ExportMixin:
                 and not serialization_options['predictions'].get('only_id')
             ):
                 options['expand'].append('predictions')
-            if 'annotations__completed_by' in serialization_options and not serialization_options[
-                'annotations__completed_by'
-            ].get('only_id'):
+            if (
+                'annotations__completed_by' in serialization_options
+                and not serialization_options['annotations__completed_by'].get(
+                    'only_id'
+                )
+            ):
                 options['expand'].append('annotations.completed_by')
-            options['context'] = {'interpolate_key_frames': settings.INTERPOLATE_KEY_FRAMES}
+            options['context'] = {
+                'interpolate_key_frames': settings.INTERPOLATE_KEY_FRAMES
+            }
             if 'interpolate_key_frames' in serialization_options:
-                options['context']['interpolate_key_frames'] = serialization_options['interpolate_key_frames']
+                options['context']['interpolate_key_frames'] = serialization_options[
+                    'interpolate_key_frames'
+                ]
         return options
 
     def get_task_queryset(self, ids, annotation_filter_options):
         annotations_qs = self._get_filtered_annotations_queryset(
             annotation_filter_options=annotation_filter_options
         )
-        return Task.objects.filter(id__in=ids).prefetch_related(
-            Prefetch(
-                "annotations",
-                queryset=annotations_qs,
+        return (
+            Task.objects.filter(id__in=ids)
+            .prefetch_related(
+                Prefetch(
+                    "annotations",
+                    queryset=annotations_qs,
+                )
             )
-        ).prefetch_related(
-                'predictions', 'drafts'
-            )
+            .prefetch_related('predictions', 'drafts')
+        )
 
-    def get_export_data(self, task_filter_options=None, annotation_filter_options=None, serialization_options=None):
+    def get_export_data(
+        self,
+        task_filter_options=None,
+        annotation_filter_options=None,
+        serialization_options=None,
+    ):
         """
         serialization_options: None or Dict({
             drafts: optional
@@ -189,28 +205,36 @@ class ExportMixin:
             all_tasks = self.project.tasks
             logger.debug('Tasks filtration')
             task_ids = (
-                self._get_filtered_tasks(all_tasks, task_filter_options=task_filter_options)
+                self._get_filtered_tasks(
+                    all_tasks, task_filter_options=task_filter_options
+                )
                 .distinct()
                 .values_list('id', flat=True)
             )
-            base_export_serializer_option = self._get_export_serializer_option(serialization_options)
+            base_export_serializer_option = self._get_export_serializer_option(
+                serialization_options
+            )
             i = 0
             BATCH_SIZE = 1000
             for ids in batch(task_ids, BATCH_SIZE):
                 i += 1
                 tasks = list(self.get_task_queryset(ids, annotation_filter_options))
                 logger.debug(f'Batch: {i*BATCH_SIZE}')
-                if isinstance(task_filter_options, dict) and task_filter_options.get('only_with_annotations'):
+                if isinstance(task_filter_options, dict) and task_filter_options.get(
+                    'only_with_annotations'
+                ):
                     tasks = [task for task in tasks if task.annotations.exists()]
 
-                serializer = ExportDataSerializer(tasks, many=True, **base_export_serializer_option)
+                serializer = ExportDataSerializer(
+                    tasks, many=True, **base_export_serializer_option
+                )
                 self.counters['task_number'] += len(tasks)
                 for task in serializer.data:
                     yield task
 
     @staticmethod
     def eval_md5(file):
-        md5_object = hashlib.md5()   # nosec
+        md5_object = hashlib.md5()  # nosec
         block_size = 128 * md5_object.block_size
         chunk = file.read(block_size)
         while chunk:
@@ -222,15 +246,18 @@ class ExportMixin:
     def save_file(self, file, md5):
         now = datetime.now()
         file_name = f'project-{self.project.id}-at-{now.strftime("%Y-%m-%d-%H-%M")}-{md5[0:8]}.json'
-        file_path = (
-            f'{self.project.id}/{file_name}'
-        )  # finally file will be in settings.DELAYED_EXPORT_DIR/self.project.id/file_name
+        file_path = f'{self.project.id}/{file_name}'  # finally file will be in settings.DELAYED_EXPORT_DIR/self.project.id/file_name
         file_ = File(file, name=file_path)
         self.file.save(file_path, file_)
         self.md5 = md5
         self.save(update_fields=['file', 'md5', 'counters'])
 
-    def export_to_file(self, task_filter_options=None, annotation_filter_options=None, serialization_options=None):
+    def export_to_file(
+        self,
+        task_filter_options=None,
+        annotation_filter_options=None,
+        serialization_options=None,
+    ):
         logger.debug(
             f'Run export for {self.id} with params:\n'
             f'task_filter_options: {task_filter_options}\n'
@@ -247,7 +274,9 @@ class ExportMixin:
                     )
                 )
             )
-            with tempfile.NamedTemporaryFile(suffix=".export.json", dir=settings.FILE_UPLOAD_TEMP_DIR) as file:
+            with tempfile.NamedTemporaryFile(
+                suffix=".export.json", dir=settings.FILE_UPLOAD_TEMP_DIR
+            ) as file:
                 for chunk in iter_json:
                     encoded_chunk = chunk.encode('utf-8')
                     file.write(encoded_chunk)
@@ -267,7 +296,12 @@ class ExportMixin:
             self.finished_at = datetime.now()
             self.save(update_fields=['finished_at'])
 
-    def run_file_exporting(self, task_filter_options=None, annotation_filter_options=None, serialization_options=None):
+    def run_file_exporting(
+        self,
+        task_filter_options=None,
+        annotation_filter_options=None,
+        serialization_options=None,
+    ):
         if self.status == self.Status.IN_PROGRESS:
             logger.warning('Try to export with in progress stage')
             return
@@ -320,7 +354,9 @@ class ExportMixin:
                 return None
             elif len(files) == 1 and len(dirs) == 0:
                 output_file = files[0]
-                filename = pathlib.Path(input_name).stem + pathlib.Path(output_file).suffix
+                filename = (
+                    pathlib.Path(input_name).stem + pathlib.Path(output_file).suffix
+                )
             else:
                 shutil.make_archive(out_dir, 'zip', out_dir)
                 output_file = pathlib.Path(tmp_dir) / (str(out_dir.stem) + '.zip')
@@ -334,7 +370,12 @@ class ExportMixin:
 
 
 def export_background(
-    export_id, task_filter_options, annotation_filter_options, serialization_options, *args, **kwargs
+    export_id,
+    task_filter_options,
+    annotation_filter_options,
+    serialization_options,
+    *args,
+    **kwargs,
 ):
     from data_export.models import Export
 

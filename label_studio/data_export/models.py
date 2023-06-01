@@ -143,14 +143,24 @@ class DataExport(object):
         return sorted(formats, key=lambda f: f.get('disabled', False))
 
     @staticmethod
-    def generate_export_file(project, tasks, output_format, download_resources, get_args):
+    def generate_export_file(
+        project, tasks, output_format, download_resources, get_args
+    ):
         # prepare for saving
         now = datetime.now()
         data = json.dumps(tasks, ensure_ascii=False)
-        md5 = hashlib.md5(json.dumps(data).encode('utf-8')).hexdigest()   # nosec
-        name = 'project-' + str(project.id) + '-at-' + now.strftime('%Y-%m-%d-%H-%M') + f'-{md5[0:8]}'
+        md5 = hashlib.md5(json.dumps(data).encode('utf-8')).hexdigest()  # nosec
+        name = (
+            'project-'
+            + str(project.id)
+            + '-at-'
+            + now.strftime('%Y-%m-%d-%H-%M')
+            + f'-{md5[0:8]}'
+        )
 
-        input_json = DataExport.save_export_files(project, now, get_args, data, md5, name)
+        input_json = DataExport.save_export_files(
+            project, now, get_args, data, md5, name
+        )
 
         converter = Converter(
             config=project.get_parsed_config(),
@@ -201,7 +211,7 @@ class ConvertedFormat(models.Model):
         Export,
         related_name='converted_formats',
         on_delete=models.CASCADE,
-        help_text='Export snapshot for this converted file'
+        help_text='Export snapshot for this converted file',
     )
     file = models.FileField(
         upload_to=settings.DELAYED_EXPORT_DIR,
@@ -213,13 +223,9 @@ class ConvertedFormat(models.Model):
         default=Status.CREATED,
     )
     traceback = models.TextField(
-        null=True,
-        blank=True,
-        help_text='Traceback report in case of errors'
+        null=True, blank=True, help_text='Traceback report in case of errors'
     )
-    export_type = models.CharField(
-        max_length=64
-    )
+    export_type = models.CharField(max_length=64)
     created_at = models.DateTimeField(
         _('created at'),
         null=True,
@@ -247,7 +253,9 @@ class ConvertedFormat(models.Model):
     )
 
     def delete(self, *args, **kwargs):
-        if flag_set('ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short'):
+        if flag_set(
+            'ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short'
+        ):
             if self.file:
                 self.file.delete()
         super().delete(*args, **kwargs)

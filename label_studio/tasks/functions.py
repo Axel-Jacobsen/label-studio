@@ -19,7 +19,9 @@ from data_export.mixins import ExportMixin
 logger = logging.getLogger(__name__)
 
 
-def calculate_stats_all_orgs(from_scratch, redis, migration_name='0018_manual_migrate_counters'):
+def calculate_stats_all_orgs(
+    from_scratch, redis, migration_name='0018_manual_migrate_counters'
+):
     logger = logging.getLogger(__name__)
     organizations = Organization.objects.order_by('-id')
 
@@ -28,11 +30,13 @@ def calculate_stats_all_orgs(from_scratch, redis, migration_name='0018_manual_mi
 
         # start async calculation job on redis
         start_job_async_or_sync(
-            redis_job_for_calculation, org, from_scratch,
+            redis_job_for_calculation,
+            org,
+            from_scratch,
             redis=redis,
             queue_name='critical',
             job_timeout=3600 * 24,  # 24 hours for one organization
-            migration_name=migration_name
+            migration_name=migration_name,
         )
 
         logger.debug(f"Organization {org.id} stats were recalculated")
@@ -40,7 +44,9 @@ def calculate_stats_all_orgs(from_scratch, redis, migration_name='0018_manual_mi
     logger.debug("All organizations were recalculated")
 
 
-def redis_job_for_calculation(org, from_scratch, migration_name='0018_manual_migrate_counters'):
+def redis_job_for_calculation(
+    org, from_scratch, migration_name='0018_manual_migrate_counters'
+):
     """
     Recalculate counters for projects list
     :param org: Organization to recalculate
@@ -51,10 +57,12 @@ def redis_job_for_calculation(org, from_scratch, migration_name='0018_manual_mig
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    
+
     projects = Project.objects.filter(organization=org).order_by('-updated_at')
     for project in projects:
         migration = AsyncMigrationStatus.objects.create(
@@ -67,10 +75,15 @@ def redis_job_for_calculation(org, from_scratch, migration_name='0018_manual_mig
             f"with task count {project.tasks.count()} and updated_at {project.updated_at}"
         )
 
-        task_count = project.update_tasks_counters(project.tasks.all(), from_scratch=from_scratch)
+        task_count = project.update_tasks_counters(
+            project.tasks.all(), from_scratch=from_scratch
+        )
 
         migration.status = AsyncMigrationStatus.STATUS_FINISHED
-        migration.meta = {'tasks_processed': task_count, 'total_project_tasks': project.tasks.count()}
+        migration.meta = {
+            'tasks_processed': task_count,
+            'total_project_tasks': project.tasks.count(),
+        }
         migration.save()
         logger.debug(
             f"End processing counters for project <{project.title}> ({project.id}), "
@@ -85,7 +98,9 @@ def export_project(project_id, export_format, path, serializer_context=None):
 
     export_format = export_format.upper()
     supported_formats = [s['name'] for s in DataExport.get_export_formats(project)]
-    assert export_format in supported_formats, f'Export format is not supported, please use {supported_formats}'
+    assert (
+        export_format in supported_formats
+    ), f'Export format is not supported, please use {supported_formats}'
 
     task_ids = (
         Task.objects.filter(project=project)
@@ -93,7 +108,9 @@ def export_project(project_id, export_format, path, serializer_context=None):
         .prefetch_related("annotations", "predictions")
     )
 
-    logger.debug(f"Start exporting project <{project.title}> ({project.id}) with task count {task_ids.count()}.")
+    logger.debug(
+        f"Start exporting project <{project.title}> ({project.id}) with task count {task_ids.count()}."
+    )
 
     # serializer context
     if isinstance(serializer_context, str):
@@ -103,11 +120,7 @@ def export_project(project_id, export_format, path, serializer_context=None):
     # export cycle
     tasks = []
     for _task_ids in batch(task_ids, 1000):
-        tasks += ExportDataSerializer(
-            _task_ids,
-            many=True,
-            **serializer_options
-        ).data
+        tasks += ExportDataSerializer(_task_ids, many=True, **serializer_options).data
 
     # convert to output format
     export_stream, _, filename = DataExport.generate_export_file(
@@ -119,7 +132,9 @@ def export_project(project_id, export_format, path, serializer_context=None):
     with open(filepath, "wb") as file:
         file.write(export_stream.read())
 
-    logger.debug(f"End exporting project <{project.title}> ({project.id}) in {export_format} format.")
+    logger.debug(
+        f"End exporting project <{project.title}> ({project.id}) in {export_format} format."
+    )
 
     return filepath
 
@@ -136,4 +151,3 @@ def fill_annotations_project():
         start_job_async_or_sync(_fill_annotations_project, project.id)
 
     logger.info('Finished filling project field for Annotation model')
-

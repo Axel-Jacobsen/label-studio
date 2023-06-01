@@ -92,7 +92,6 @@ class ExportStorageDetailAPI(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ImportStorageSyncAPI(generics.GenericAPIView):
-
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = all_permissions.projects_change
     serializer_class = ImportStorageSerializer
@@ -111,7 +110,6 @@ class ImportStorageSyncAPI(generics.GenericAPIView):
 
 
 class ExportStorageSyncAPI(generics.GenericAPIView):
-
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = all_permissions.projects_change
     serializer_class = ExportStorageSerializer
@@ -137,7 +135,9 @@ class StorageValidateAPI(generics.CreateAPIView):
         storage_id = request.data.get('id')
         instance = None
         if storage_id:
-            instance = generics.get_object_or_404(self.serializer_class.Meta.model.objects.all(), pk=storage_id)
+            instance = generics.get_object_or_404(
+                self.serializer_class.Meta.model.objects.all(), pk=storage_id
+            )
             if not instance.has_permission(request.user):
                 raise PermissionDenied()
 
@@ -160,7 +160,6 @@ class StorageValidateAPI(generics.CreateAPIView):
 
 
 class StorageFormLayoutAPI(generics.RetrieveAPIView):
-
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = all_permissions.projects_change
     swagger_schema = None
@@ -168,9 +167,13 @@ class StorageFormLayoutAPI(generics.RetrieveAPIView):
 
     @swagger_auto_schema(auto_schema=None)
     def get(self, request, *args, **kwargs):
-        form_layout_file = os.path.join(os.path.dirname(inspect.getfile(self.__class__)), 'form_layout.yml')
+        form_layout_file = os.path.join(
+            os.path.dirname(inspect.getfile(self.__class__)), 'form_layout.yml'
+        )
         if not os.path.exists(form_layout_file):
-            raise NotFound(f'"form_layout.yml" is not found for {self.__class__.__name__}')
+            raise NotFound(
+                f'"form_layout.yml" is not found for {self.__class__.__name__}'
+            )
 
         form_layout = read_yaml(form_layout_file)
         form_layout = self.post_process_form(form_layout)

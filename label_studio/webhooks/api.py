@@ -18,7 +18,9 @@ from projects import models as project_models
 
 class WebhookFilterSet(django_filters.FilterSet):
     project = django_filters.ModelChoiceFilter(
-        field_name='project', queryset=project_models.Project.objects.all(), null_label='isnull'
+        field_name='project',
+        queryset=project_models.Project.objects.all(),
+        null_label='isnull',
     )
 
 
@@ -54,27 +56,41 @@ class WebhookListAPI(generics.ListCreateAPIView):
     filterset_class = WebhookFilterSet
 
     def get_queryset(self):
-        return Webhook.objects.filter(organization=self.request.user.active_organization)
+        return Webhook.objects.filter(
+            organization=self.request.user.active_organization
+        )
 
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.active_organization)
 
 
-@method_decorator(name='get', decorator=swagger_auto_schema(tags=['Webhooks'], operation_summary='Get webhook info'))
+@method_decorator(
+    name='get',
+    decorator=swagger_auto_schema(
+        tags=['Webhooks'], operation_summary='Get webhook info'
+    ),
+)
 @method_decorator(
     name='put',
     decorator=swagger_auto_schema(
-        tags=['Webhooks'], operation_summary='Save webhook info', query_serializer=WebhookSerializerForUpdate
+        tags=['Webhooks'],
+        operation_summary='Save webhook info',
+        query_serializer=WebhookSerializerForUpdate,
     ),
 )
 @method_decorator(
     name='patch',
     decorator=swagger_auto_schema(
-        tags=['Webhooks'], operation_summary='Update webhook info', query_serializer=WebhookSerializerForUpdate
+        tags=['Webhooks'],
+        operation_summary='Update webhook info',
+        query_serializer=WebhookSerializerForUpdate,
     ),
 )
 @method_decorator(
-    name='delete', decorator=swagger_auto_schema(tags=['Webhooks'], operation_summary='Delete webhook info')
+    name='delete',
+    decorator=swagger_auto_schema(
+        tags=['Webhooks'], operation_summary='Delete webhook info'
+    ),
 )
 class WebhookAPI(generics.RetrieveUpdateDestroyAPIView):
     queryset = Webhook.objects.all()
@@ -87,7 +103,9 @@ class WebhookAPI(generics.RetrieveUpdateDestroyAPIView):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        return Webhook.objects.filter(organization=self.request.user.active_organization)
+        return Webhook.objects.filter(
+            organization=self.request.user.active_organization
+        )
 
 
 @method_decorator(

@@ -16,7 +16,8 @@ from collections import defaultdict
 from django.conf import settings
 from label_studio.core.utils.io import find_file
 from label_studio.core.utils.exceptions import (
-    LabelStudioValidationErrorSentryIgnored, LabelStudioXMLSyntaxErrorSentryIgnored
+    LabelStudioValidationErrorSentryIgnored,
+    LabelStudioXMLSyntaxErrorSentryIgnored,
 )
 from label_studio_tools.core import label_config
 
@@ -25,13 +26,10 @@ logger = logging.getLogger(__name__)
 
 _DATA_EXAMPLES = None
 _LABEL_TAGS = {'Label', 'Choice', 'Relation'}
-SINGLE_VALUED_TAGS = {
-    'choices': str,
-    'rating': int,
-    'number': float,
-    'textarea': str
+SINGLE_VALUED_TAGS = {'choices': str, 'rating': int, 'number': float, 'textarea': str}
+_NOT_CONTROL_TAGS = {
+    'Filter',
 }
-_NOT_CONTROL_TAGS = {'Filter',}
 # TODO: move configs in right place
 _LABEL_CONFIG_SCHEMA = find_file('label_config_schema.json')
 with open(_LABEL_CONFIG_SCHEMA) as f:
@@ -53,7 +51,9 @@ def parse_config(config_string):
             "labels": ["Label1", "Label2", "Label3"] // taken from "alias" if exists or "value"
     }
     """
-    logger.warning("Using deprecated method - switch to label_studio.tools.label_config.parse_config!")
+    logger.warning(
+        "Using deprecated method - switch to label_studio.tools.label_config.parse_config!"
+    )
     return label_config.parse_config(config_string)
 
 
@@ -64,10 +64,14 @@ def _fix_choices(config):
     '''
     if 'Choices' in config:
         # for single Choices tag in View
-        if 'Choice' in config['Choices'] and not isinstance(config['Choices']['Choice'], list):
+        if 'Choice' in config['Choices'] and not isinstance(
+            config['Choices']['Choice'], list
+        ):
             config['Choices']['Choice'] = [config['Choices']['Choice']]
         # for several Choices tags in View
-        elif isinstance(config['Choices'], list) and all('Choice' in tag_choices for tag_choices in config['Choices']):
+        elif isinstance(config['Choices'], list) and all(
+            'Choice' in tag_choices for tag_choices in config['Choices']
+        ):
             for n in range(len(config['Choices'])):
                 # check that Choices tag has only 1 choice
                 if not isinstance(config['Choices'][n]['Choice'], list):
@@ -101,13 +105,17 @@ def validate_label_config(config_string):
         raise LabelStudioValidationErrorSentryIgnored(str(exc))
     except jsonschema.exceptions.ValidationError as exc:
         error_message = exc.context[-1].message if len(exc.context) else exc.message
-        error_message = 'Validation failed on {}: {}'.format('/'.join(map(str, exc.path)), error_message.replace('@', ''))
+        error_message = 'Validation failed on {}: {}'.format(
+            '/'.join(map(str, exc.path)), error_message.replace('@', '')
+        )
         raise LabelStudioValidationErrorSentryIgnored(error_message)
 
     # unique names in config # FIXME: 'name =' (with spaces) won't work
     all_names = re.findall(r'name="([^"]*)"', config_string)
     if len(set(all_names)) != len(all_names):
-        raise LabelStudioValidationErrorSentryIgnored('Label config contains non-unique names')
+        raise LabelStudioValidationErrorSentryIgnored(
+            'Label config contains non-unique names'
+        )
 
     # toName points to existent name
     names = set(all_names)
@@ -115,7 +123,9 @@ def validate_label_config(config_string):
     for toName_ in toNames:
         for toName in toName_.split(','):
             if toName not in names:
-                raise LabelStudioValidationErrorSentryIgnored(f'toName="{toName}" not found in names: {sorted(names)}')
+                raise LabelStudioValidationErrorSentryIgnored(
+                    f'toName="{toName}" not found in names: {sorted(names)}'
+                )
 
 
 def extract_data_types(label_config):
@@ -185,8 +195,8 @@ def config_line_stipped(c):
 
 
 def get_task_from_labeling_config(config):
-    """ Get task, annotations and predictions from labeling config comment,
-        it must start from "<!-- {" and end as "} -->"
+    """Get task, annotations and predictions from labeling config comment,
+    it must start from "<!-- {" and end as "} -->"
     """
     # try to get task data, annotations & predictions from config comment
     task_data, annotations, predictions = {}, None, None
@@ -196,23 +206,24 @@ def get_task_from_labeling_config(config):
     end = config[start:].find('-->') if start >= 0 else -1
     if 3 < start < start + end:
         try:
-            logger.debug('Parse ' + config[start:start + end])
-            body = json.loads(config[start:start + end])
+            logger.debug('Parse ' + config[start : start + end])
+            body = json.loads(config[start : start + end])
         except Exception as exc:
             logger.error("Can't parse task from labeling config", exc_info=True)
             pass
         else:
             logger.debug(json.dumps(body, indent=2))
             dont_use_root = 'predictions' in body or 'annotations' in body
-            task_data = body['data'] if 'data' in body else (None if dont_use_root else body)
+            task_data = (
+                body['data'] if 'data' in body else (None if dont_use_root else body)
+            )
             predictions = body['predictions'] if 'predictions' in body else None
             annotations = body['annotations'] if 'annotations' in body else None
     return task_data, annotations, predictions
 
 
 def data_examples(mode):
-    """ Data examples for editor preview and task upload examples
-    """
+    """Data examples for editor preview and task upload examples"""
     global _DATA_EXAMPLES
 
     if _DATA_EXAMPLES is None:
@@ -223,14 +234,15 @@ def data_examples(mode):
         for root in roots:
             for key, value in _DATA_EXAMPLES[root].items():
                 if isinstance(value, str):
-                    _DATA_EXAMPLES[root][key] = value.replace('<HOSTNAME>', settings.HOSTNAME)
+                    _DATA_EXAMPLES[root][key] = value.replace(
+                        '<HOSTNAME>', settings.HOSTNAME
+                    )
 
     return _DATA_EXAMPLES[mode]
 
 
 def generate_sample_task_without_check(label_config, mode='upload', secure_mode=False):
-    """ Generate sample task only
-    """
+    """Generate sample task only"""
     # load config
     xml = etree.fromstring(label_config, forbid_dtd=False)
     if xml is None:
@@ -243,7 +255,6 @@ def generate_sample_task_without_check(label_config, mode='upload', secure_mode=
     task = {}
     parent = xml.findall('.//*[@value]')  # take all tags with value attribute
     for p in parent:
-
         # Make sure it is a real object tag, extract data placeholder key
         value = p.get('value')
         if not value or not value.startswith('$'):
@@ -261,7 +272,7 @@ def generate_sample_task_without_check(label_config, mode='upload', secure_mode=
 
         elif value == 'video' and p.tag == 'HyperText':
             task[value] = examples.get('$videoHack')
-        # List with a matching Ranker tag pair 
+        # List with a matching Ranker tag pair
         elif p.tag == 'List':
             task[value] = examples.get('List')
         elif p.tag == 'Paragraphs':
@@ -274,7 +285,9 @@ def generate_sample_task_without_check(label_config, mode='upload', secure_mode=
             else:
                 task[value] = []
                 for item in examples[p.tag]:
-                    task[value].append({name_key: item['author'], text_key: item['text']})
+                    task[value].append(
+                        {name_key: item['author'], text_key: item['text']}
+                    )
 
         elif p.tag == 'TimeSeries':
             # TimeSeries special case - generate signals on-the-fly
@@ -297,7 +310,9 @@ def generate_sample_task_without_check(label_config, mode='upload', secure_mode=
                 task[value] = '/samples/time-series.csv?' + urlencode(params)
             else:
                 # data is JSON
-                task[value] = generate_time_series_json(time_column, value_columns, time_format)
+                task[value] = generate_time_series_json(
+                    time_column, value_columns, time_format
+                )
         elif p.tag == 'HyperText':
             if only_urls:
                 task[value] = examples['HyperTextUrl']
@@ -342,19 +357,20 @@ def _is_strftime_string(s):
 
 
 def generate_time_series_json(time_column, value_columns, time_format=None):
-    """ Generate sample for time series
-    """
+    """Generate sample for time series"""
     n = 100
     if time_format is not None and not _is_strftime_string(time_format):
-        time_fmt_map = {
-            'yyyy-MM-dd': '%Y-%m-%d'
-        }
+        time_fmt_map = {'yyyy-MM-dd': '%Y-%m-%d'}
         time_format = time_fmt_map.get(time_format)
 
     if time_format is None:
         times = np.arange(n).tolist()
     else:
-        times = pd.date_range('2020-01-01', periods=n, freq='D').strftime(time_format).tolist()
+        times = (
+            pd.date_range('2020-01-01', periods=n, freq='D')
+            .strftime(time_format)
+            .tolist()
+        )
     ts = {time_column: times}
     for value_col in value_columns:
         ts[value_col] = np.random.randn(n).tolist()
@@ -362,18 +378,20 @@ def generate_time_series_json(time_column, value_columns, time_format=None):
 
 
 def get_sample_task(label_config, secure_mode=False):
-    """ Get sample task from labeling config and combine it with generated sample task
-    """
-    predefined_task, annotations, predictions = get_task_from_labeling_config(label_config)
-    generated_task = generate_sample_task_without_check(label_config, mode='editor_preview', secure_mode=secure_mode)
+    """Get sample task from labeling config and combine it with generated sample task"""
+    predefined_task, annotations, predictions = get_task_from_labeling_config(
+        label_config
+    )
+    generated_task = generate_sample_task_without_check(
+        label_config, mode='editor_preview', secure_mode=secure_mode
+    )
     if predefined_task is not None:
         generated_task.update(predefined_task)
     return generated_task, annotations, predictions
 
 
 def config_essential_data_has_changed(new_config_str, old_config_str):
-    """ Detect essential changes of the labeling config
-    """
+    """Detect essential changes of the labeling config"""
     new_config = parse_config(new_config_str)
     old_config = parse_config(old_config_str)
 
@@ -390,10 +408,11 @@ def config_essential_data_has_changed(new_config_str, old_config_str):
 
 
 def replace_task_data_undefined_with_config_field(data, project, first_key=None):
-    """ Use first key is passed (for speed up) or project.data.types.keys()[0]
-    """
+    """Use first key is passed (for speed up) or project.data.types.keys()[0]"""
     # assign undefined key name from data to the first key from config, e.g. for txt loading
-    if settings.DATA_UNDEFINED_NAME in data and (first_key or project.data_types.keys()):
+    if settings.DATA_UNDEFINED_NAME in data and (
+        first_key or project.data_types.keys()
+    ):
         key = first_key or list(project.data_types.keys())[0]
         data[key] = data[settings.DATA_UNDEFINED_NAME]
         del data[settings.DATA_UNDEFINED_NAME]

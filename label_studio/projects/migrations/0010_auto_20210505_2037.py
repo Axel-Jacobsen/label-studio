@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projects', '0009_project_evaluate_predictions_automatically'),
     ]

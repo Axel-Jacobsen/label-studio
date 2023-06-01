@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('organizations', '0001_squashed_0008_auto_20201005_1552'),
     ]

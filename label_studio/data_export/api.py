@@ -27,7 +27,13 @@ from projects.models import Project
 from tasks.models import Task
 from .models import DataExport, Export, ConvertedFormat
 
-from .serializers import ExportDataSerializer, ExportSerializer, ExportCreateSerializer, ExportParamSerializer, ExportConvertSerializer
+from .serializers import (
+    ExportDataSerializer,
+    ExportSerializer,
+    ExportCreateSerializer,
+    ExportParamSerializer,
+    ExportConvertSerializer,
+)
 from ranged_fileresponse import RangedFileResponse
 
 logger = logging.getLogger(__name__)
@@ -44,7 +50,8 @@ logger = logging.getLogger(__name__)
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
         ],
         responses={
             200: openapi.Response(
@@ -53,7 +60,9 @@ logger = logging.getLogger(__name__)
                     title='Format list',
                     description='List of available formats',
                     type=openapi.TYPE_ARRAY,
-                    items=openapi.Schema(title="Export format", type=openapi.TYPE_STRING),
+                    items=openapi.Schema(
+                        title="Export format", type=openapi.TYPE_STRING
+                    ),
                 ),
             )
         },
@@ -63,7 +72,9 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
     permission_required = all_permissions.projects_view
 
     def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.active_organization)
+        return Project.objects.filter(
+            organization=self.request.user.active_organization
+        )
 
     def get(self, request, *args, **kwargs):
         project = self.get_object()
@@ -100,7 +111,11 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
             openapi.Parameter(
                 name='ids',
                 type=openapi.TYPE_ARRAY,
-                items=openapi.Schema(title='Task ID', description='Individual task ID', type=openapi.TYPE_INTEGER),
+                items=openapi.Schema(
+                    title='Task ID',
+                    description='Individual task ID',
+                    type=openapi.TYPE_INTEGER,
+                ),
                 in_=openapi.IN_QUERY,
                 description="""
                           Specify a list of task IDs to retrieve only the details for those tasks.
@@ -110,7 +125,7 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'
+                description='A unique integer value identifying this project.',
             ),
         ],
         tags=['Export'],
@@ -141,7 +156,9 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
             200: openapi.Response(
                 description='Exported data',
                 schema=openapi.Schema(
-                    title='Export file', description='Export file with results', type=openapi.TYPE_FILE
+                    title='Export file',
+                    description='Export file with results',
+                    type=openapi.TYPE_FILE,
                 ),
             )
         },
@@ -151,20 +168,29 @@ class ExportAPI(generics.RetrieveAPIView):
     permission_required = all_permissions.projects_change
 
     def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.active_organization)
+        return Project.objects.filter(
+            organization=self.request.user.active_organization
+        )
 
     def get_task_queryset(self, queryset):
-        return queryset.select_related('project').prefetch_related('annotations', 'predictions')
+        return queryset.select_related('project').prefetch_related(
+            'annotations', 'predictions'
+        )
 
     def get(self, request, *args, **kwargs):
         project = self.get_object()
         query_serializer = ExportParamSerializer(data=request.GET)
         query_serializer.is_valid(raise_exception=True)
 
-        export_type = query_serializer.validated_data.get('exportType') or query_serializer.validated_data['export_type']
+        export_type = (
+            query_serializer.validated_data.get('exportType')
+            or query_serializer.validated_data['export_type']
+        )
         only_finished = not query_serializer.validated_data['download_all_tasks']
         download_resources = query_serializer.validated_data['download_resources']
-        interpolate_key_frames = query_serializer.validated_data['interpolate_key_frames']
+        interpolate_key_frames = query_serializer.validated_data[
+            'interpolate_key_frames'
+        ]
 
         tasks_ids = request.GET.getlist('ids[]')
 
@@ -182,8 +208,10 @@ class ExportAPI(generics.RetrieveAPIView):
         tasks = []
         for _task_ids in batch(task_ids, 1000):
             tasks += ExportDataSerializer(
-                self.get_task_queryset(query.filter(id__in=_task_ids)), many=True, expand=['drafts'],
-                context={'interpolate_key_frames': interpolate_key_frames}
+                self.get_task_queryset(query.filter(id__in=_task_ids)),
+                many=True,
+                expand=['drafts'],
+                context={'interpolate_key_frames': interpolate_key_frames},
             ).data
         logger.debug('Prepare export files')
 
@@ -213,7 +241,9 @@ class ProjectExportFiles(generics.RetrieveAPIView):
     swagger_schema = None  # hide export files endpoint from swagger
 
     def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.active_organization)
+        return Project.objects.filter(
+            organization=self.request.user.active_organization
+        )
 
     def get(self, request, *args, **kwargs):
         # project permission check
@@ -226,7 +256,10 @@ class ProjectExportFiles(generics.RetrieveAPIView):
                 if str(kwargs['pk']) == project_id:
                     paths.append(settings.EXPORT_URL_ROOT + name)
 
-        items = [{'name': p.split('/')[2].split('.')[0], 'url': p} for p in sorted(paths)[::-1]]
+        items = [
+            {'name': p.split('/')[2].split('.')[0], 'url': p}
+            for p in sorted(paths)[::-1]
+        ]
         return Response({'export_files': items}, status=status.HTTP_200_OK)
 
 
@@ -245,9 +278,15 @@ class ProjectExportFilesAuthCheck(APIView):
         try:
             pk = int(project_id)
         except ValueError:
-            return Response({'detail': 'Incorrect filename in export'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(
+                {'detail': 'Incorrect filename in export'},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
-        generics.get_object_or_404(Project.objects.filter(organization=self.request.user.active_organization), pk=pk)
+        generics.get_object_or_404(
+            Project.objects.filter(organization=self.request.user.active_organization),
+            pk=pk,
+        )
         return Response({'detail': 'auth ok'}, status=status.HTTP_200_OK)
 
 
@@ -264,8 +303,9 @@ class ProjectExportFilesAuthCheck(APIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.')
-        ]
+                description='A unique integer value identifying this project.',
+            )
+        ],
     ),
 )
 @method_decorator(
@@ -281,8 +321,9 @@ class ProjectExportFilesAuthCheck(APIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.')
-        ]
+                description='A unique integer value identifying this project.',
+            )
+        ],
     ),
 )
 class ExportListAPI(generics.ListCreateAPIView):
@@ -308,7 +349,9 @@ class ExportListAPI(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         task_filter_options = serializer.validated_data.pop('task_filter_options')
-        annotation_filter_options = serializer.validated_data.pop('annotation_filter_options')
+        annotation_filter_options = serializer.validated_data.pop(
+            'annotation_filter_options'
+        )
         serialization_options = serializer.validated_data.pop('serialization_options')
 
         project = self._get_project()
@@ -328,10 +371,13 @@ class ExportListAPI(generics.ListCreateAPIView):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if flag_set('fflag_fix_back_lsdv_4929_limit_exports_10042023_short', user='auto'):
+        if flag_set(
+            'fflag_fix_back_lsdv_4929_limit_exports_10042023_short', user='auto'
+        ):
             return queryset.order_by('-created_at')[:100]
         else:
             return queryset
+
 
 @method_decorator(
     name='get',
@@ -346,13 +392,15 @@ class ExportListAPI(generics.ListCreateAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
             openapi.Parameter(
                 name='export_pk',
                 type=openapi.TYPE_STRING,
                 in_=openapi.IN_PATH,
-                description='Primary key identifying the export file.'),
-        ]
+                description='Primary key identifying the export file.',
+            ),
+        ],
     ),
 )
 @method_decorator(
@@ -368,13 +416,15 @@ class ExportListAPI(generics.ListCreateAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
             openapi.Parameter(
                 name='export_pk',
                 type=openapi.TYPE_STRING,
                 in_=openapi.IN_PATH,
-                description='Primary key identifying the export file.'),
-        ]
+                description='Primary key identifying the export file.',
+            ),
+        ],
     ),
 )
 class ExportDetailAPI(generics.RetrieveDestroyAPIView):
@@ -385,7 +435,9 @@ class ExportDetailAPI(generics.RetrieveDestroyAPIView):
     permission_required = all_permissions.projects_change
 
     def delete(self, *args, **kwargs):
-        if flag_set('ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short'):
+        if flag_set(
+            'ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short'
+        ):
             try:
                 export = self.get_object()
                 export.file.delete()
@@ -397,9 +449,9 @@ class ExportDetailAPI(generics.RetrieveDestroyAPIView):
                 return Response(
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     data={
-                        'detail':
-                            'Could not delete file from storage. Check that your user has permissions to delete files: %s' % str(e)
-                    }
+                        'detail': 'Could not delete file from storage. Check that your user has permissions to delete files: %s'
+                        % str(e)
+                    },
                 )
 
         return super().delete(*args, **kwargs)
@@ -441,12 +493,14 @@ class ExportDetailAPI(generics.RetrieveDestroyAPIView):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
             openapi.Parameter(
                 name='export_pk',
                 type=openapi.TYPE_STRING,
                 in_=openapi.IN_PATH,
-                description='Primary key identifying the export file.'),
+                description='Primary key identifying the export file.',
+            ),
         ],
     ),
 )
@@ -476,10 +530,15 @@ class ExportDownloadAPI(generics.RetrieveAPIView):
         if snapshot.status != Export.Status.COMPLETED:
             return HttpResponse('Export is not completed', status=404)
 
-        if flag_set('fflag_fix_all_lsdv_4813_async_export_conversion_22032023_short', request.user):
+        if flag_set(
+            'fflag_fix_all_lsdv_4813_async_export_conversion_22032023_short',
+            request.user,
+        ):
             file = snapshot.file
             if export_type is not None and export_type != 'JSON':
-                converted_file = snapshot.converted_formats.filter(export_type=export_type).first()
+                converted_file = snapshot.converted_formats.filter(
+                    export_type=export_type
+                ).first()
                 if converted_file is None:
                     raise NotFound(f'{export_type} format is not converted yet')
                 file = converted_file.file
@@ -495,16 +554,25 @@ class ExportDownloadAPI(generics.RetrieveAPIView):
                 # let NGINX handle it
                 response = HttpResponse()
                 # below header tells NGINX to catch it and serve, see docker-config/nginx-app.conf
-                redirect = '/file_download/' + protocol + '/' + url.replace(protocol + '://', '')
+                redirect = (
+                    '/file_download/'
+                    + protocol
+                    + '/'
+                    + url.replace(protocol + '://', '')
+                )
                 response['X-Accel-Redirect'] = redirect
-                response['Content-Disposition'] = 'attachment; filename="{}"'.format(file.name)
+                response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+                    file.name
+                )
                 response['filename'] = os.path.basename(file.name)
                 return response
 
             # No NGINX: standard way for export downloads in the community edition
             else:
                 ext = file.name.split('.')[-1]
-                response = RangedFileResponse(request, file, content_type=f'application/{ext}')
+                response = RangedFileResponse(
+                    request, file, content_type=f'application/{ext}'
+                )
                 response['Content-Disposition'] = f'attachment; filename="{file.name}"'
                 response['filename'] = os.path.basename(file.name)
                 return response
@@ -519,7 +587,9 @@ class ExportDownloadAPI(generics.RetrieveAPIView):
 
             ext = file_.name.split('.')[-1]
 
-            response = RangedFileResponse(request, file_, content_type=f'application/{ext}')
+            response = RangedFileResponse(
+                request, file_, content_type=f'application/{ext}'
+            )
             response['Content-Disposition'] = f'attachment; filename="{file_.name}"'
             response['filename'] = file_.name
             return response
@@ -530,10 +600,14 @@ def async_convert(converted_format_id, export_type, project, **kwargs):
         try:
             converted_format = ConvertedFormat.objects.get(id=converted_format_id)
         except ConvertedFormat.DoesNotExist:
-            logger.error(f'ConvertedFormat with id {converted_format_id} not found, conversion failed')
+            logger.error(
+                f'ConvertedFormat with id {converted_format_id} not found, conversion failed'
+            )
             return
         if converted_format.status != ConvertedFormat.Status.CREATED:
-            logger.error(f'Conversion for export id {converted_format.export.id} to {export_type} already started')
+            logger.error(
+                f'Conversion for export id {converted_format.export.id} to {export_type} already started'
+            )
             return
         converted_format.status = ConvertedFormat.Status.IN_PROGRESS
         converted_format.save(update_fields=['status'])
@@ -541,15 +615,17 @@ def async_convert(converted_format_id, export_type, project, **kwargs):
     snapshot = converted_format.export
     converted_file = snapshot.convert_file(export_type)
     if converted_file is None:
-        raise ValidationError('No converted file found, probably there are no annotations in the export snapshot')
+        raise ValidationError(
+            'No converted file found, probably there are no annotations in the export snapshot'
+        )
     md5 = Export.eval_md5(converted_file)
     ext = converted_file.name.split('.')[-1]
 
     now = datetime.now()
-    file_name = f'project-{project.id}-at-{now.strftime("%Y-%m-%d-%H-%M")}-{md5[0:8]}.{ext}'
-    file_path = (
-        f'{project.id}/{file_name}'
-    )  # finally file will be in settings.DELAYED_EXPORT_DIR/project.id/file_name
+    file_name = (
+        f'project-{project.id}-at-{now.strftime("%Y-%m-%d-%H-%M")}-{md5[0:8]}.{ext}'
+    )
+    file_path = f'{project.id}/{file_name}'  # finally file will be in settings.DELAYED_EXPORT_DIR/project.id/file_name
     file_ = File(converted_file, name=file_path)
     converted_format.file.save(file_path, file_)
     converted_format.status = ConvertedFormat.Status.COMPLETED
@@ -561,7 +637,9 @@ def set_convert_background_failure(job, connection, type, value, traceback_obj):
 
     convert_id = job.args[0]
     trace = tb.format_exception(type, value, traceback_obj)
-    ConvertedFormat.objects.filter(id=convert_id).update(status=Export.Status.FAILED, traceback=''.join(trace))
+    ConvertedFormat.objects.filter(id=convert_id).update(
+        status=Export.Status.FAILED, traceback=''.join(trace)
+    )
 
 
 @method_decorator(name='get', decorator=swagger_auto_schema(auto_schema=None))
@@ -579,13 +657,15 @@ def set_convert_background_failure(job, connection, type, value, traceback_obj):
                 name='id',
                 type=openapi.TYPE_INTEGER,
                 in_=openapi.IN_PATH,
-                description='A unique integer value identifying this project.'),
+                description='A unique integer value identifying this project.',
+            ),
             openapi.Parameter(
                 name='export_pk',
                 type=openapi.TYPE_STRING,
                 in_=openapi.IN_PATH,
-                description='Primary key identifying the export file.'),
-        ]
+                description='Primary key identifying the export file.',
+            ),
+        ],
     ),
 )
 class ExportConvertAPI(generics.RetrieveAPIView):
@@ -595,7 +675,9 @@ class ExportConvertAPI(generics.RetrieveAPIView):
 
     def post(self, request, *args, **kwargs):
         snapshot = self.get_object()
-        serializer = ExportConvertSerializer(data=request.data, context={'project': snapshot.project})
+        serializer = ExportConvertSerializer(
+            data=request.data, context={'project': snapshot.project}
+        )
         serializer.is_valid(raise_exception=True)
         export_type = serializer.validated_data['export_type']
 
@@ -603,7 +685,7 @@ class ExportConvertAPI(generics.RetrieveAPIView):
             converted_format, created = ConvertedFormat.objects.get_or_create(
                 export=snapshot, export_type=export_type
             )
-            
+
             if not created:
                 raise ValidationError(f'Conversion to {export_type} already started')
 
@@ -612,6 +694,8 @@ class ExportConvertAPI(generics.RetrieveAPIView):
             converted_format.id,
             export_type,
             snapshot.project,
-            on_failure=set_convert_background_failure
+            on_failure=set_convert_background_failure,
         )
-        return Response({'export_type': export_type, 'converted_format': converted_format.id})
+        return Response(
+            {'export_type': export_type, 'converted_format': converted_format.id}
+        )

@@ -41,13 +41,18 @@ def test_run_webhook(setup_project_dialog, organization_webhook):
     webhook = organization_webhook
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', webhook.url)
-        run_webhook(organization_webhook, WebhookAction.PROJECT_CREATED, {'data': 'test'})
+        run_webhook(
+            organization_webhook, WebhookAction.PROJECT_CREATED, {'data': 'test'}
+        )
 
     request_history = m.request_history
     assert len(request_history) == 1
     assert request_history[0].method == 'POST'
     assert request_history[0].url == organization_webhook.url
-    TestCase().assertDictEqual(request_history[0].json(), {'action': WebhookAction.PROJECT_CREATED, 'data': 'test'})
+    TestCase().assertDictEqual(
+        request_history[0].json(),
+        {'action': WebhookAction.PROJECT_CREATED, 'data': 'test'},
+    )
 
 
 @pytest.mark.django_db
@@ -55,13 +60,21 @@ def test_emit_webhooks(setup_project_dialog, organization_webhook):
     webhook = organization_webhook
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', webhook.url)
-        emit_webhooks(webhook.organization, webhook.project, WebhookAction.PROJECT_CREATED, {'data': 'test'})
+        emit_webhooks(
+            webhook.organization,
+            webhook.project,
+            WebhookAction.PROJECT_CREATED,
+            {'data': 'test'},
+        )
 
     request_history = m.request_history
     assert len(request_history) == 1
     assert request_history[0].method == 'POST'
     assert request_history[0].url == webhook.url
-    TestCase().assertDictEqual(request_history[0].json(), {'action': WebhookAction.PROJECT_CREATED, 'data': 'test'})
+    TestCase().assertDictEqual(
+        request_history[0].json(),
+        {'action': WebhookAction.PROJECT_CREATED, 'data': 'test'},
+    )
 
 
 @pytest.mark.django_db
@@ -72,7 +85,10 @@ def test_emit_webhooks_for_instance(setup_project_dialog, organization_webhook):
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', webhook.url)
         emit_webhooks_for_instance(
-            webhook.organization, webhook.project, WebhookAction.PROJECT_CREATED, instance=project
+            webhook.organization,
+            webhook.project,
+            WebhookAction.PROJECT_CREATED,
+            instance=project,
         )
     assert len(m.request_history) == 1
     assert m.request_history[0].method == 'POST'
@@ -93,7 +109,9 @@ def test_exception_catch(organization_webhook):
 
 # PROJECT CREATE/UPDATE/DELETE API
 @pytest.mark.django_db
-def test_webhooks_for_projects(configured_project, business_client, organization_webhook):
+def test_webhooks_for_projects(
+    configured_project, business_client, organization_webhook
+):
     webhook = organization_webhook
 
     # create/update/delete project through API
@@ -132,7 +150,12 @@ def test_webhooks_for_projects(configured_project, business_client, organization
             reverse('projects:api:project-detail', kwargs={'pk': project_id}),
         )
     assert response.status_code == 204
-    assert len(list(filter(lambda x: x.url == organization_webhook.url, m.request_history))) == 1
+    assert (
+        len(
+            list(filter(lambda x: x.url == organization_webhook.url, m.request_history))
+        )
+        == 1
+    )
 
     r = list(filter(lambda x: x.url == organization_webhook.url, m.request_history))[0]
     assert r.json()['action'] == WebhookAction.PROJECT_DELETED
@@ -170,7 +193,9 @@ def test_webhooks_for_tasks(configured_project, business_client, organization_we
     url = webhook.url
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', url)
-        response = business_client.delete(reverse('tasks:api:task-detail', kwargs={'pk': task_id}))
+        response = business_client.delete(
+            reverse('tasks:api:task-detail', kwargs={'pk': task_id})
+        )
 
     assert response.status_code == 204
     assert len(list(filter(lambda x: x.url == webhook.url, m.request_history))) == 1
@@ -183,7 +208,9 @@ def test_webhooks_for_tasks(configured_project, business_client, organization_we
 
 # TASK CREATE on IMPORT
 @pytest.mark.django_db
-def test_webhooks_for_tasks_import(configured_project, business_client, organization_webhook):
+def test_webhooks_for_tasks_import(
+    configured_project, business_client, organization_webhook
+):
     from django.core.files.uploadedfile import SimpleUploadedFile
 
     webhook = organization_webhook
@@ -191,7 +218,9 @@ def test_webhooks_for_tasks_import(configured_project, business_client, organiza
     IMPORT_CSV = "tests/test_suites/samples/test_5.csv"
 
     with open(IMPORT_CSV, 'rb') as file_:
-        data = SimpleUploadedFile('test_5.csv', file_.read(), content_type='multipart/form-data')
+        data = SimpleUploadedFile(
+            'test_5.csv', file_.read(), content_type='multipart/form-data'
+        )
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', webhook.url)
         response = business_client.post(
@@ -213,8 +242,9 @@ def test_webhooks_for_tasks_import(configured_project, business_client, organiza
 
 # ANNOTATION CREATE/UPDATE/DELETE
 @pytest.mark.django_db
-def test_webhooks_for_annotation(configured_project, business_client, organization_webhook):
-
+def test_webhooks_for_annotation(
+    configured_project, business_client, organization_webhook
+):
     webhook = organization_webhook
     task = configured_project.tasks.all().first()
     # CREATE
@@ -311,7 +341,9 @@ def test_webhooks_for_annotation(configured_project, business_client, organizati
 
 # ACTION: DELETE ANNOTATIONS
 @pytest.mark.django_db
-def test_webhooks_for_action_delete_tasks_annotations(configured_project, business_client, organization_webhook):
+def test_webhooks_for_action_delete_tasks_annotations(
+    configured_project, business_client, organization_webhook
+):
     webhook = organization_webhook
 
     # create annotations for tasks
@@ -345,7 +377,9 @@ def test_webhooks_for_action_delete_tasks_annotations(configured_project, busine
 
 # ACTION: DELETE TASKS
 @pytest.mark.django_db
-def test_webhooks_for_action_delete_tasks_annotations(configured_project, business_client, organization_webhook):
+def test_webhooks_for_action_delete_tasks_annotations(
+    configured_project, business_client, organization_webhook
+):
     webhook = organization_webhook
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri('POST', webhook.url)

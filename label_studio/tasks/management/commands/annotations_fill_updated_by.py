@@ -9,5 +9,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        migration = importlib.import_module('tasks.migrations.0033_annotation_updated_by_fill')
+        migration = importlib.import_module(
+            'tasks.migrations.0033_annotation_updated_by_fill'
+        )
         migration._fill_annotations_updated_by()
